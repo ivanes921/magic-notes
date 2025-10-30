@@ -9,6 +9,8 @@
   <style>
     :root{
       --bg: #ffffff;
+      --text: #1c1c1e;
+      --placeholder: rgba(60,60,67,.30);
       --muted-icon: rgba(60,60,67,.30);      /* iOS grey (light) */
       --safe-t: env(safe-area-inset-top, 0px);
       --safe-b: env(safe-area-inset-bottom, 0px);
@@ -20,6 +22,8 @@
     @media (prefers-color-scheme: dark){
       :root{
         --bg: #000000;
+        --text: #f2f2f7;
+        --placeholder: rgba(235,235,245,.3);
         --muted-icon: rgba(235,235,245,.55); /* iOS grey (dark) */
       }
     }
@@ -29,6 +33,7 @@
     body{
       margin:0;
       background:var(--bg);
+      color: var(--text);
       font:16px/1 -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
       -webkit-font-smoothing:antialiased;
       -moz-osx-font-smoothing:grayscale;
@@ -40,17 +45,64 @@
       height: calc(var(--bar-h) + var(--safe-t));
       padding-top: var(--safe-t);
       display:flex; align-items:center; justify-content:space-between;
-      padding-left: calc(8px + var(--safe-l));
+      padding-left: calc(12px + var(--safe-l));
       padding-right: calc(8px + var(--safe-r));
       background: transparent;
     }
     .left, .right{ display:flex; align-items:center; gap:10px; }
+
     .hit{ width:66px; height:66px; display:flex; align-items:center; justify-content:center; }
 
     /* Поле «листа» */
     .sheet{
       min-height: calc(100vh - var(--bar-h) - var(--tool-h) - var(--safe-t) - var(--safe-b));
       padding: 8px 12px;
+      cursor: text;
+    }
+
+    .note{
+      min-height: calc(100vh - var(--bar-h) - var(--tool-h) - var(--safe-t) - var(--safe-b) - 16px);
+      outline: none;
+      caret-color: #E4AF0A;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .note .title,
+    .note .body{
+      min-height: 1.2em;
+      white-space: pre-wrap;
+    }
+
+    .note .title{
+      font-size: 32px;
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+
+    .note .body{
+      font-size: 18px;
+      line-height: 1.35;
+    }
+
+    .note [data-placeholder]:empty::before{
+      content: attr(data-placeholder);
+      color: var(--placeholder);
+    }
+
+    .note .photo-block{
+      border-radius: 12px;
+      overflow: hidden;
+      align-self: flex-start;
+      max-width: 100%;
+    }
+
+    .note .photo-block img{
+      display: block;
+      width: 100%;
+      height: auto;
     }
 
     /* Нижняя панель инструментов */
@@ -104,7 +156,14 @@
   </header>
 
   <!-- ЛИСТ -->
-  <div class="sheet" aria-label="Лист заметки"></div>
+  <div class="sheet" aria-label="Лист заметки">
+    <div class="note" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Текст заметки" spellcheck="false">
+      <div class="title" data-placeholder="Заголовок">При</div>
+      <div class="body" data-placeholder="Текст">Роооо</div>
+    </div>
+  </div>
+
+  <input type="file" accept="image/*" capture="environment" id="camera-input" style="display:none" aria-hidden="true" />
 
   <!-- НИЗ -->
   <footer class="toolbar" role="toolbar" aria-label="Панель инструментов">
@@ -137,5 +196,161 @@
     </div>
   </footer>
 
+</body>
+<script>
+  (function(){
+    const sheet = document.querySelector('.sheet');
+    const note = document.querySelector('.note');
+    const cameraTool = document.querySelector('.tool[aria-label="Камера"]');
+    const cameraInput = document.getElementById('camera-input');
+
+    if (!sheet || !note) {
+      return;
+    }
+
+    const TITLE_PLACEHOLDER = 'Заголовок';
+    const BODY_PLACEHOLDER = 'Текст';
+    const TEXT_BLOCK_SELECTOR = '.title, .body';
+
+    function createBlock(type){
+      const block = document.createElement('div');
+      block.classList.add(type);
+      block.dataset.placeholder = type === 'title' ? TITLE_PLACEHOLDER : BODY_PLACEHOLDER;
+      block.innerHTML = '';
+      return block;
+    }
+
+    function ensureBlocks(){
+      const children = Array.from(note.children);
+      if (!children.length){
+        note.appendChild(createBlock('title'));
+      }
+
+      let textIndex = 0;
+      Array.from(note.children).forEach(child => {
+        if (child.classList.contains('photo-block')){
+          return;
+        }
+
+        const desired = textIndex === 0 ? 'title' : 'body';
+        textIndex += 1;
+
+        child.classList.remove('title', 'body');
+        child.classList.add(desired);
+        child.dataset.placeholder = desired === 'title' ? TITLE_PLACEHOLDER : BODY_PLACEHOLDER;
+
+        if (child.innerHTML === '<br>' || child.innerHTML === '<br />'){
+          child.innerHTML = '';
+        }
+      });
+
+      if (!textIndex){
+        note.appendChild(createBlock('title'));
+      }
+    }
+
+    function placeCaretInside(element){
+      const selection = window.getSelection();
+      const range = document.createRange();
+      range.selectNodeContents(element);
+      range.collapse(false);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+
+    function focusEnd(){
+      ensureBlocks();
+      const textBlocks = Array.from(note.querySelectorAll(TEXT_BLOCK_SELECTOR));
+      const target = textBlocks.length ? textBlocks[textBlocks.length - 1] : note;
+      note.focus({ preventScroll: true });
+      placeCaretInside(target);
+    }
+
+    function insertBlockAfter(reference, block){
+      if (reference && reference.parentElement === note){
+        note.insertBefore(block, reference.nextSibling);
+      } else {
+        note.appendChild(block);
+      }
+    }
+
+    function getCurrentBlock(){
+      const selection = window.getSelection();
+      if (!selection.rangeCount){
+        return null;
+      }
+      const anchorNode = selection.anchorNode instanceof Element ? selection.anchorNode : selection.anchorNode?.parentElement;
+      return anchorNode ? anchorNode.closest('.title, .body, .photo-block') : null;
+    }
+
+    sheet.addEventListener('pointerdown', event => {
+      if (event.target.closest('.note') || event.target.closest('.toolbar')){
+        return;
+      }
+      event.preventDefault();
+      focusEnd();
+    });
+
+    note.addEventListener('focus', ensureBlocks);
+    ensureBlocks();
+
+    note.addEventListener('keydown', event => {
+      if (event.key === 'Enter' && !event.shiftKey){
+        event.preventDefault();
+        const currentBlock = getCurrentBlock();
+        const newBlock = createBlock('body');
+        insertBlockAfter(currentBlock, newBlock);
+        note.focus({ preventScroll: true });
+        placeCaretInside(newBlock);
+        ensureBlocks();
+      }
+    });
+
+    note.addEventListener('input', ensureBlocks);
+
+    cameraTool?.addEventListener('click', () => {
+      note.focus({ preventScroll: true });
+      cameraInput?.click();
+    });
+
+    cameraInput?.addEventListener('change', () => {
+      const file = cameraInput.files && cameraInput.files[0];
+      if (!file){
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.addEventListener('load', () => {
+        const block = document.createElement('div');
+        block.className = 'photo-block';
+        const img = document.createElement('img');
+        img.src = String(reader.result);
+        img.alt = 'Добавленное фото';
+        block.appendChild(img);
+
+        const currentBlock = getCurrentBlock();
+        insertBlockAfter(currentBlock, block);
+
+        ensureBlocks();
+
+        let nextEditable = block.nextElementSibling;
+        while (nextEditable && nextEditable.classList.contains('photo-block')){
+          nextEditable = nextEditable.nextElementSibling;
+        }
+
+        if (!nextEditable){
+          nextEditable = createBlock('body');
+          note.insertBefore(nextEditable, block.nextSibling);
+        }
+
+        note.focus({ preventScroll: true });
+        placeCaretInside(nextEditable);
+      });
+
+      reader.readAsDataURL(file);
+      cameraInput.value = '';
+    });
+  })();
+</script>
 </body>
 </html>
