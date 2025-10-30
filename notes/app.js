@@ -140,3 +140,21 @@
   });
 
 })();
+// --- A2HS подсказка (iOS standalone) ---
+(function a2hsHint(){
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
+
+  if (!isStandalone && isIOS) {
+    const tip = document.createElement('div');
+    tip.innerHTML = 'Добавь на Домой: <b>Поделиться</b> → <b>На экран «Домой»</b>';
+    Object.assign(tip.style, {
+      position:'fixed', left:'50%', transform:'translateX(-50%)',
+      bottom: 'calc(60px + var(--safe-bottom))',
+      background:'#111', color:'#fff', padding:'10px 12px', borderRadius:'12px',
+      fontSize:'14px', opacity:'0.9', zIndex:'999'
+    });
+    document.body.appendChild(tip);
+    setTimeout(()=> tip.remove(), 5000);
+  }
+})();
