@@ -13,3 +13,5 @@ html,body{margin:0;padding:0;background:var(--bg);color:var(--text)}
 .btn{display:inline-block;padding:10px 14px;border-radius:10px;border:1px solid var(--border);text-decoration:none;color:var(--text)}
 .btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
 .code{font-family:ui-monospace,Menlo,Consolas,monospace;background:#f2f2f7;border:1px solid var(--border);padding:6px 8px;border-radius:8px}
+/* если есть autoin, блок ввода комнаты не показываем вообще */
+.autojoin #connectUI { display: none !important; }
