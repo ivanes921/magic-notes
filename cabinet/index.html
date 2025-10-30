@@ -20,10 +20,14 @@
       <a class="btn" href="../" target="_blank">Домой</a>
     </div>
 
-    <h3>Создание комнаты</h3>
-    <button class="btn-primary" id="createRoom">Создать комнату</button>
-    <p>Код комнаты: <span class="code" id="roomCode">—</span></p>
-    <p>Ссылка зрителя: <span class="code" id="spectatorLink">—</span></p>
+    <h3>Комната</h3>
+<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+  <label>Код: <input id="roomInput" class="code" placeholder="XXXXXX" style="letter-spacing:2px" /></label>
+  <button class="btn-primary" id="joinByCode">Подключиться</button>
+  <button class="btn" id="genCode">Сгенерировать</button>
+</div>
+<p>Код комнаты: <span class="code" id="roomCode">—</span></p>
+<p>Ссылка зрителя: <span class="code" id="spectatorLink">—</span></p>
 
     <h3>Режимы</h3>
     <div style="display:grid;gap:12px">
