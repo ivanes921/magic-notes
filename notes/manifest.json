@@ -1,7 +1,7 @@
 {
   "name": "Заметки",
   "short_name": "Заметки",
-  "start_url": "./index.html",
+  "start_url": "./index.html?autojoin=1",
   "display": "standalone",
   "background_color": "#ffffff",
   "theme_color": "#f6f6f6",
