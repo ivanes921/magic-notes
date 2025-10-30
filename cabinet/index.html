@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Magic Notes — Кабинет</title>
+  <link rel="stylesheet" href="../shared/ui-ios.css" />
+  <!-- Firebase SDK (v8 для простоты) -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="../shared/firebase-init.js"></script>
+</head>
+<body>
+  <div class="navbar">Кабинет фокусника</div>
+  <div class="container">
+    <p>Шаг 3 добавит реальную связь с Firebase. Пока это «каркас».</p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <a class="btn" href="../notes/" target="_blank">Открыть «Заметки» (демо)</a>
+      <a class="btn" href="../" target="_blank">Домой</a>
+    </div>
+
+    <h3>Создание комнаты</h3>
+    <button class="btn-primary" id="createRoom">Создать комнату</button>
+    <p>Код комнаты: <span class="code" id="roomCode">—</span></p>
+    <p>Ссылка зрителя: <span class="code" id="spectatorLink">—</span></p>
+
+    <h3>Режимы</h3>
+    <div style="display:grid;gap:12px">
+      <div style="border:1px solid var(--border);padding:12px;border-radius:12px">
+        <strong>PEEK (подсмотр)</strong><br/>
+        <button class="btn" id="peekToggle">Чёрный экран</button>
+      </div>
+      <div style="border:1px solid var(--border);padding:12px;border-radius:12px">
+        <strong>Автоподбор</strong><br/>
+        <label>Секретное слово: <input id="targetWord" placeholder="дискотека" /></label>
+        <label>Префикс (букв): <input id="prefixLen" type="number" value="3" min="0" max="5" style="width:64px"/></label>
+        <div style="margin-top:8px;display:flex;gap:8px">
+          <button class="btn-primary" id="autofillOn">Включить</button>
+          <button class="btn" id="autofillOff">Выключить</button>
+        </div>
+      </div>
+    </div>
+
+    <h3>Текст зрителя (live)</h3>
+    <pre id="liveText" class="code" style="white-space:pre-wrap;min-height:80px">—</pre>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
