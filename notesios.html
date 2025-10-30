@@ -10,6 +10,7 @@
     :root{
       --bg: #ffffff;
       --text: #1c1c1e;
+      --placeholder: rgba(60,60,67,.30);
       --muted-icon: rgba(60,60,67,.30);      /* iOS grey (light) */
       --safe-t: env(safe-area-inset-top, 0px);
       --safe-b: env(safe-area-inset-bottom, 0px);
@@ -22,6 +23,7 @@
       :root{
         --bg: #000000;
         --text: #f2f2f7;
+        --placeholder: rgba(235,235,245,.3);
         --muted-icon: rgba(235,235,245,.55); /* iOS grey (dark) */
       }
     }
@@ -43,19 +45,18 @@
       height: calc(var(--bar-h) + var(--safe-t));
       padding-top: var(--safe-t);
       display:flex; align-items:center; justify-content:space-between;
-      padding-left: calc(24px + var(--safe-l));
+      padding-left: calc(12px + var(--safe-l));
       padding-right: calc(8px + var(--safe-r));
       background: transparent;
     }
-    .left, .right{ display:flex; align-items:center; }
-    .right{ gap:7px; }
-    .left .hit{ justify-content:flex-start; padding-left:14px; }
+    .left, .right{ display:flex; align-items:center; gap:10px; }
+
     .hit{ width:66px; height:66px; display:flex; align-items:center; justify-content:center; }
 
     /* Поле «листа» */
     .sheet{
       min-height: calc(100vh - var(--bar-h) - var(--tool-h) - var(--safe-t) - var(--safe-b));
-      padding: 8px calc(12px + var(--safe-r)) 8px calc(24px + var(--safe-l));
+      padding: 8px 12px;
       cursor: text;
     }
 
@@ -84,6 +85,11 @@
     .note .body{
       font-size: 18px;
       line-height: 1.35;
+    }
+
+    .note [data-placeholder]:empty::before{
+      content: attr(data-placeholder);
+      color: var(--placeholder);
     }
 
     .note .photo-block{
@@ -152,7 +158,8 @@
   <!-- ЛИСТ -->
   <div class="sheet" aria-label="Лист заметки">
     <div class="note" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Текст заметки" spellcheck="false">
-      <div class="title"></div>
+      <div class="title" data-placeholder="Заголовок">При</div>
+      <div class="body" data-placeholder="Текст">Роооо</div>
     </div>
   </div>
 
@@ -196,34 +203,19 @@
     const note = document.querySelector('.note');
     const cameraTool = document.querySelector('.tool[aria-label="Камера"]');
     const cameraInput = document.getElementById('camera-input');
-    const shareButton = document.querySelector('[data-role="share"]');
-    const statusBarMeta = document.getElementById('status-bar-style');
-    const darkScheme = window.matchMedia('(prefers-color-scheme: dark)');
-
-    function applyStatusBarStyle(source){
-      if (!statusBarMeta){
-        return;
-      }
-      const isDark = typeof source.matches === 'boolean' ? source.matches : darkScheme.matches;
-      statusBarMeta.setAttribute('content', isDark ? 'black' : 'default');
-    }
-
-    applyStatusBarStyle(darkScheme);
-    if (typeof darkScheme.addEventListener === 'function'){
-      darkScheme.addEventListener('change', applyStatusBarStyle);
-    } else if (typeof darkScheme.addListener === 'function'){
-      darkScheme.addListener(applyStatusBarStyle);
-    }
 
     if (!sheet || !note) {
       return;
     }
 
+    const TITLE_PLACEHOLDER = 'Заголовок';
+    const BODY_PLACEHOLDER = 'Текст';
     const TEXT_BLOCK_SELECTOR = '.title, .body';
 
     function createBlock(type){
       const block = document.createElement('div');
       block.classList.add(type);
+      block.dataset.placeholder = type === 'title' ? TITLE_PLACEHOLDER : BODY_PLACEHOLDER;
       block.innerHTML = '';
       return block;
     }
@@ -245,6 +237,7 @@
 
         child.classList.remove('title', 'body');
         child.classList.add(desired);
+        child.dataset.placeholder = desired === 'title' ? TITLE_PLACEHOLDER : BODY_PLACEHOLDER;
 
         if (child.innerHTML === '<br>' || child.innerHTML === '<br />'){
           child.innerHTML = '';
@@ -298,32 +291,8 @@
       focusEnd();
     });
 
-    function hasTypedContent(){
-      return Array.from(note.querySelectorAll(TEXT_BLOCK_SELECTOR)).some(block => {
-        const text = block.textContent || '';
-        return text.replace(/[\s\u200B]+/g, '').length > 0;
-      });
-    }
-
-    function hasMediaContent(){
-      return !!note.querySelector('.photo-block');
-    }
-
-    function updateShareState(){
-      if (!shareButton){
-        return;
-      }
-      const active = hasTypedContent() || hasMediaContent();
-      shareButton.classList.toggle('muted', !active);
-      shareButton.setAttribute('aria-disabled', active ? 'false' : 'true');
-    }
-
-    note.addEventListener('focus', () => {
-      ensureBlocks();
-      updateShareState();
-    });
+    note.addEventListener('focus', ensureBlocks);
     ensureBlocks();
-    updateShareState();
 
     note.addEventListener('keydown', event => {
       if (event.key === 'Enter' && !event.shiftKey){
@@ -334,14 +303,10 @@
         note.focus({ preventScroll: true });
         placeCaretInside(newBlock);
         ensureBlocks();
-        updateShareState();
       }
     });
 
-    note.addEventListener('input', () => {
-      ensureBlocks();
-      updateShareState();
-    });
+    note.addEventListener('input', ensureBlocks);
 
     cameraTool?.addEventListener('click', () => {
       note.focus({ preventScroll: true });
@@ -367,7 +332,6 @@
         insertBlockAfter(currentBlock, block);
 
         ensureBlocks();
-        updateShareState();
 
         let nextEditable = block.nextElementSibling;
         while (nextEditable && nextEditable.classList.contains('photo-block')){
