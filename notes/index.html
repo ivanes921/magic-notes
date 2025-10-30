@@ -6,6 +6,21 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="manifest" href="./manifest.json">
   <link rel="apple-touch-icon" href="./icons/ios-180.png">
+  
+<script>
+  // До рендеринга: решаем, нужно ли скрывать блок подключения
+  (function () {
+    try {
+      var qs = new URLSearchParams(location.search);
+      var fromQuery = qs.get('room');
+      var fromStorage = localStorage.getItem('magic_notes_last_room');
+      if (fromQuery || fromStorage) {
+        // метка на <html>, чтобы CSS сразу спрятал UI
+        document.documentElement.classList.add('autojoin');
+      }
+    } catch (e) {}
+  })();
+</script>
 
   <!-- Firebase SDK -->
   <script>
