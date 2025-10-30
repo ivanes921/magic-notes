@@ -4,22 +4,24 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
-  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" id="status-bar-style" />
   <title>Заметка</title>
   <style>
     :root{
       --bg: #ffffff;
+      --text: #1c1c1e;
       --muted-icon: rgba(60,60,67,.30);      /* iOS grey (light) */
       --safe-t: env(safe-area-inset-top, 0px);
       --safe-b: env(safe-area-inset-bottom, 0px);
       --safe-l: env(safe-area-inset-left, 0px);
       --safe-r: env(safe-area-inset-right, 0px);
-      --bar-h: 44px;                         /* высота топ-бара */
+      --bar-h: 66px;                         /* высота топ-бара */
       --tool-h: 54px;                        /* высота нижней панели */
     }
     @media (prefers-color-scheme: dark){
       :root{
         --bg: #000000;
+        --text: #f2f2f7;
         --muted-icon: rgba(235,235,245,.55); /* iOS grey (dark) */
       }
     }
@@ -29,6 +31,7 @@
     body{
       margin:0;
       background:var(--bg);
+      color: var(--text);
       font:16px/1 -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
       -webkit-font-smoothing:antialiased;
       -moz-osx-font-smoothing:grayscale;
@@ -40,17 +43,60 @@
       height: calc(var(--bar-h) + var(--safe-t));
       padding-top: var(--safe-t);
       display:flex; align-items:center; justify-content:space-between;
-      padding-left: calc(8px + var(--safe-l));
+      padding-left: calc(24px + var(--safe-l));
       padding-right: calc(8px + var(--safe-r));
       background: transparent;
     }
-    .left, .right{ display:flex; align-items:center; gap:10px; }
-    .hit{ width:44px; height:44px; display:flex; align-items:center; justify-content:center; }
+    .left, .right{ display:flex; align-items:center; }
+    .right{ gap:7px; }
+    .left .hit{ justify-content:flex-start; padding-left:14px; }
+    .hit{ width:66px; height:66px; display:flex; align-items:center; justify-content:center; }
 
     /* Поле «листа» */
     .sheet{
       min-height: calc(100vh - var(--bar-h) - var(--tool-h) - var(--safe-t) - var(--safe-b));
-      padding: 8px 12px;
+      padding: 8px calc(12px + var(--safe-r)) 8px calc(24px + var(--safe-l));
+      cursor: text;
+    }
+
+    .note{
+      min-height: calc(100vh - var(--bar-h) - var(--tool-h) - var(--safe-t) - var(--safe-b) - 16px);
+      outline: none;
+      caret-color: #E4AF0A;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .note .title,
+    .note .body{
+      min-height: 1.2em;
+      white-space: pre-wrap;
+    }
+
+    .note .title{
+      font-size: 32px;
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+
+    .note .body{
+      font-size: 18px;
+      line-height: 1.35;
+    }
+
+    .note .photo-block{
+      border-radius: 12px;
+      overflow: hidden;
+      align-self: flex-start;
+      max-width: 100%;
+    }
+
+    .note .photo-block img{
+      display: block;
+      width: 100%;
+      height: auto;
     }
 
     /* Нижняя панель инструментов */
@@ -88,10 +134,10 @@
     </div>
 
     <div class="right">
-      <div class="hit muted" aria-label="Поделиться (неактивно)">
-        <!-- Поделиться (серый) -->
+      <div class="hit muted" data-role="share" aria-label="Поделиться" aria-disabled="true">
+        <!-- Поделиться -->
         <svg width="25" height="44" viewBox="0 0 25 44" fill="none" xmlns="http://www.w3.org/2000/svg">
-<path d="M6.33398 33.7705C5.20964 33.7705 4.36458 33.4912 3.79883 32.9326C3.24023 32.3812 2.96094 31.5505 2.96094 30.4404V19.8379C2.96094 18.7279 3.24023 17.8971 3.79883 17.3457C4.36458 16.7871 5.20964 16.5078 6.33398 16.5078H9.62109V18.2373H6.35547C5.81836 18.2373 5.40658 18.3805 5.12012 18.667C4.83366 18.9463 4.69043 19.3652 4.69043 19.9238V30.3545C4.69043 30.9131 4.83366 31.332 5.12012 31.6113C5.40658 31.8978 5.81836 32.041 6.35547 32.041H18.623C19.153 32.041 19.5648 31.8978 19.8584 31.6113C20.152 31.332 20.2988 30.9131 20.2988 30.3545V19.9238C20.2988 19.3652 20.152 18.9463 19.8584 18.667C19.5648 18.3805 19.153 18.2373 18.623 18.2373H15.3574V16.5078H18.6553C19.7796 16.5078 20.6211 16.7871 21.1797 17.3457C21.7454 17.8971 22.0283 18.7279 22.0283 19.8379V30.4404C22.0283 31.5505 21.7454 32.3812 21.1797 32.9326C20.6211 33.4912 19.7796 33.7705 18.6553 33.7705H6.33398ZM12.4893 25.3486C12.2601 25.3486 12.0596 25.2663 11.8877 25.1016C11.723 24.9368 11.6406 24.7435 11.6406 24.5215V13.5859L11.7051 11.9854L11.1035 12.6191L9.43848 14.3916C9.28809 14.5635 9.09115 14.6494 8.84766 14.6494C8.62565 14.6494 8.43945 14.5778 8.28906 14.4346C8.14583 14.2913 8.07422 14.1123 8.07422 13.8975C8.07422 13.6898 8.16016 13.5 8.33203 13.3281L11.8662 9.91211C11.9808 9.80469 12.0846 9.73307 12.1777 9.69727C12.278 9.6543 12.3818 9.63281 12.4893 9.63281C12.6038 9.63281 12.7077 9.6543 12.8008 9.69727C12.901 9.73307 13.0049 9.80469 13.1123 9.91211L16.6572 13.3281C16.8219 13.5 16.9043 13.6898 16.9043 13.8975C16.9043 14.1123 16.8291 14.2913 16.6787 14.4346C16.5283 14.5778 16.3421 14.6494 16.1201 14.6494C15.8838 14.6494 15.6904 14.5635 15.54 14.3916L13.8857 12.6191L13.2842 11.9854L13.3486 13.5859V24.5215C13.3486 24.7435 13.2627 24.9368 13.0908 25.1016C12.9261 25.2663 12.7256 25.3486 12.4893 25.3486Z" fill="#3C3C43" fill-opacity="0.3"/>
+<path d="M6.33398 33.7705C5.20964 33.7705 4.36458 33.4912 3.79883 32.9326C3.24023 32.3812 2.96094 31.5505 2.96094 30.4404V19.8379C2.96094 18.7279 3.24023 17.8971 3.79883 17.3457C4.36458 16.7871 5.20964 16.5078 6.33398 16.5078H9.62109V18.2373H6.35547C5.81836 18.2373 5.40658 18.3805 5.12012 18.667C4.83366 18.9463 4.69043 19.3652 4.69043 19.9238V30.3545C4.69043 30.9131 4.83366 31.332 5.12012 31.6113C5.40658 31.8978 5.81836 32.041 6.35547 32.041H18.623C19.153 32.041 19.5648 31.8978 19.8584 31.6113C20.152 31.332 20.2988 30.9131 20.2988 30.3545V19.9238C20.2988 19.3652 20.152 18.9463 19.8584 18.667C19.5648 18.3805 19.153 18.2373 18.623 18.2373H15.3574V16.5078H18.6553C19.7796 16.5078 20.6211 16.7871 21.1797 17.3457C21.7454 17.8971 22.0283 18.7279 22.0283 19.8379V30.4404C22.0283 31.5505 21.7454 32.3812 21.1797 32.9326C20.6211 33.4912 19.7796 33.7705 18.6553 33.7705H6.33398ZM12.4893 25.3486C12.2601 25.3486 12.0596 25.2663 11.8877 25.1016C11.723 24.9368 11.6406 24.7435 11.6406 24.5215V13.5859L11.7051 11.9854L11.1035 12.6191L9.43848 14.3916C9.28809 14.5635 9.09115 14.6494 8.84766 14.6494C8.62565 14.6494 8.43945 14.5778 8.28906 14.4346C8.14583 14.2913 8.07422 14.1123 8.07422 13.8975C8.07422 13.6898 8.16016 13.5 8.33203 13.3281L11.8662 9.91211C11.9808 9.80469 12.0846 9.73307 12.1777 9.69727C12.278 9.6543 12.3818 9.63281 12.4893 9.63281C12.6038 9.63281 12.7077 9.6543 12.8008 9.69727C12.901 9.73307 13.0049 9.80469 13.1123 9.91211L16.6572 13.3281C16.8219 13.5 16.9043 13.6898 16.9043 13.8975C16.9043 14.1123 16.8291 14.2913 16.6787 14.4346C16.5283 14.5778 16.3421 14.6494 16.1201 14.6494C15.8838 14.6494 15.6904 14.5635 15.54 14.3916L13.8857 12.6191L13.2842 11.9854L13.3486 13.5859V24.5215C13.3486 24.7435 13.2627 24.9368 13.0908 25.1016C12.9261 25.2663 12.7256 25.3486 12.4893 25.3486Z" fill="#E4AF0A"/>
 </svg>
 
       </div>
@@ -104,7 +150,13 @@
   </header>
 
   <!-- ЛИСТ -->
-  <div class="sheet" aria-label="Лист заметки"></div>
+  <div class="sheet" aria-label="Лист заметки">
+    <div class="note" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Текст заметки" spellcheck="false">
+      <div class="title"></div>
+    </div>
+  </div>
+
+  <input type="file" accept="image/*" capture="environment" id="camera-input" style="display:none" aria-hidden="true" />
 
   <!-- НИЗ -->
   <footer class="toolbar" role="toolbar" aria-label="Панель инструментов">
@@ -137,5 +189,204 @@
     </div>
   </footer>
 
+</body>
+<script>
+  (function(){
+    const sheet = document.querySelector('.sheet');
+    const note = document.querySelector('.note');
+    const cameraTool = document.querySelector('.tool[aria-label="Камера"]');
+    const cameraInput = document.getElementById('camera-input');
+    const shareButton = document.querySelector('[data-role="share"]');
+    const statusBarMeta = document.getElementById('status-bar-style');
+    const darkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+
+    function applyStatusBarStyle(source){
+      if (!statusBarMeta){
+        return;
+      }
+      const isDark = typeof source.matches === 'boolean' ? source.matches : darkScheme.matches;
+      statusBarMeta.setAttribute('content', isDark ? 'black' : 'default');
+    }
+
+    applyStatusBarStyle(darkScheme);
+    if (typeof darkScheme.addEventListener === 'function'){
+      darkScheme.addEventListener('change', applyStatusBarStyle);
+    } else if (typeof darkScheme.addListener === 'function'){
+      darkScheme.addListener(applyStatusBarStyle);
+    }
+
+    if (!sheet || !note) {
+      return;
+    }
+
+    const TEXT_BLOCK_SELECTOR = '.title, .body';
+
+    function createBlock(type){
+      const block = document.createElement('div');
+      block.classList.add(type);
+      block.innerHTML = '';
+      return block;
+    }
+
+    function ensureBlocks(){
+      const children = Array.from(note.children);
+      if (!children.length){
+        note.appendChild(createBlock('title'));
+      }
+
+      let textIndex = 0;
+      Array.from(note.children).forEach(child => {
+        if (child.classList.contains('photo-block')){
+          return;
+        }
+
+        const desired = textIndex === 0 ? 'title' : 'body';
+        textIndex += 1;
+
+        child.classList.remove('title', 'body');
+        child.classList.add(desired);
+
+        if (child.innerHTML === '<br>' || child.innerHTML === '<br />'){
+          child.innerHTML = '';
+        }
+      });
+
+      if (!textIndex){
+        note.appendChild(createBlock('title'));
+      }
+    }
+
+    function placeCaretInside(element){
+      const selection = window.getSelection();
+      const range = document.createRange();
+      range.selectNodeContents(element);
+      range.collapse(false);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+
+    function focusEnd(){
+      ensureBlocks();
+      const textBlocks = Array.from(note.querySelectorAll(TEXT_BLOCK_SELECTOR));
+      const target = textBlocks.length ? textBlocks[textBlocks.length - 1] : note;
+      note.focus({ preventScroll: true });
+      placeCaretInside(target);
+    }
+
+    function insertBlockAfter(reference, block){
+      if (reference && reference.parentElement === note){
+        note.insertBefore(block, reference.nextSibling);
+      } else {
+        note.appendChild(block);
+      }
+    }
+
+    function getCurrentBlock(){
+      const selection = window.getSelection();
+      if (!selection.rangeCount){
+        return null;
+      }
+      const anchorNode = selection.anchorNode instanceof Element ? selection.anchorNode : selection.anchorNode?.parentElement;
+      return anchorNode ? anchorNode.closest('.title, .body, .photo-block') : null;
+    }
+
+    sheet.addEventListener('pointerdown', event => {
+      if (event.target.closest('.note') || event.target.closest('.toolbar')){
+        return;
+      }
+      event.preventDefault();
+      focusEnd();
+    });
+
+    function hasTypedContent(){
+      return Array.from(note.querySelectorAll(TEXT_BLOCK_SELECTOR)).some(block => {
+        const text = block.textContent || '';
+        return text.replace(/[\s\u200B]+/g, '').length > 0;
+      });
+    }
+
+    function hasMediaContent(){
+      return !!note.querySelector('.photo-block');
+    }
+
+    function updateShareState(){
+      if (!shareButton){
+        return;
+      }
+      const active = hasTypedContent() || hasMediaContent();
+      shareButton.classList.toggle('muted', !active);
+      shareButton.setAttribute('aria-disabled', active ? 'false' : 'true');
+    }
+
+    note.addEventListener('focus', () => {
+      ensureBlocks();
+      updateShareState();
+    });
+    ensureBlocks();
+    updateShareState();
+
+    note.addEventListener('keydown', event => {
+      if (event.key === 'Enter' && !event.shiftKey){
+        event.preventDefault();
+        const currentBlock = getCurrentBlock();
+        const newBlock = createBlock('body');
+        insertBlockAfter(currentBlock, newBlock);
+        note.focus({ preventScroll: true });
+        placeCaretInside(newBlock);
+        ensureBlocks();
+        updateShareState();
+      }
+    });
+
+    note.addEventListener('input', () => {
+      ensureBlocks();
+      updateShareState();
+    });
+
+    cameraTool?.addEventListener('click', () => {
+      note.focus({ preventScroll: true });
+      cameraInput?.click();
+    });
+
+    cameraInput?.addEventListener('change', () => {
+      const file = cameraInput.files && cameraInput.files[0];
+      if (!file){
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.addEventListener('load', () => {
+        const block = document.createElement('div');
+        block.className = 'photo-block';
+        const img = document.createElement('img');
+        img.src = String(reader.result);
+        img.alt = 'Добавленное фото';
+        block.appendChild(img);
+
+        const currentBlock = getCurrentBlock();
+        insertBlockAfter(currentBlock, block);
+
+        ensureBlocks();
+        updateShareState();
+
+        let nextEditable = block.nextElementSibling;
+        while (nextEditable && nextEditable.classList.contains('photo-block')){
+          nextEditable = nextEditable.nextElementSibling;
+        }
+
+        if (!nextEditable){
+          nextEditable = createBlock('body');
+          note.insertBefore(nextEditable, block.nextSibling);
+        }
+
+        note.focus({ preventScroll: true });
+        placeCaretInside(nextEditable);
+      });
+
+      reader.readAsDataURL(file);
+      cameraInput.value = '';
+    });
+  })();
+</script>
 </body>
 </html>
