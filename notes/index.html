@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Заметки</title>
+  <link rel="stylesheet" href="../shared/ui-ios.css" />
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <link rel="manifest" href="./manifest.json">
+  <link rel="apple-touch-icon" href="./icons/ios-180.png">
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+  <script src="../shared/firebase-init.js"></script>
+  <style>
+    textarea{
+      width:100%; min-height:60vh; border:none; outline:none; resize:none;
+      font:16px/1.45 -apple-system,BlinkMacSystemFont,Inter,Segoe UI,Roboto,system-ui,sans-serif;
+      padding:16px;
+    }
+    .autobar{
+      position:fixed;left:0;right:0;bottom:env(safe-area-inset-bottom);
+      display:flex;gap:8px;justify-content:center;padding:8px;
+      background:rgba(246,246,246,.92);border-top:1px solid var(--border);
+    }
+    .chip{padding:8px 12px;border-radius:14px;border:1px solid var(--border);background:#fff}
+    .chip.center{font-weight:600}
+  </style>
+</head>
+<body>
+  <div class="navbar">Заметки</div>
+  <div class="container">
+    <p style="color:var(--muted)">Добавь на Домой: <em>Share → Add to Home Screen</em></p>
+    <label>Код комнаты: <input id="room" class="code" placeholder="XXXXXX" style="letter-spacing:2px"/></label>
+    <button class="btn" id="join">Подключиться</button>
+    <textarea id="note" placeholder="Пиши здесь…"></textarea>
+  </div>
+
+  <div class="autobar" id="autobar" style="display:none">
+    <span class="chip">пример</span>
+    <span class="chip center" id="centerWord">слово</span>
+    <span class="chip">текст</span>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
