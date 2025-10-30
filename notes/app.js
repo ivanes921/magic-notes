@@ -6,37 +6,45 @@
   const roomInput = document.getElementById('room');
   const joinBtn = document.getElementById('join');
   const noteEl = document.getElementById('note');
+  const connectUI = document.getElementById('connectUI');
 
   const autobar = document.getElementById('autobar');
   const centerWordEl = document.getElementById('centerWord');
-
-  if(qs.get('room')) roomInput.value = qs.get('room');
 
   let roomId = null;
   let roomRef = null;
   let spectatorRef = null;
 
-  // Состояние автоподбора
   let autofillActive = false;
   let targetWord = '';
   let prefixLen = 3;
 
-  // Флаг, чтобы не зациклить при приёме удалённых правок
   let applyingRemote = false;
 
-  function joinRoom(id){
-    roomId = id.toUpperCase();
+  function hideConnectUi(){ if (connectUI) connectUI.style.display = 'none'; }
+  function showConnectUi(){ if (connectUI) connectUI.style.display = ''; }
+
+  // --- Подключение к комнате ---
+  function joinRoom(id, {persist=true} = {}){
+    roomId = (id || '').toUpperCase();
+    if (!roomId) return;
     roomRef = db.ref(`rooms/${roomId}`);
     spectatorRef = roomRef.child('spectator');
 
-    // Проверка активности комнаты
+    // Сохраняем выбор комнаты, чтобы PWA из ярлыка открывалась сразу в неё
+    if (persist) localStorage.setItem('magic_notes_last_room', roomId);
+
+    hideConnectUi();
+
+    // Проверим активность
     roomRef.child('active').once('value').then(s=>{
       if(!s.val()){
         alert('Комната закрыта или не существует.');
+        showConnectUi();
         return;
       }
 
-      // Подписка на текст (если кабинет отредактирует)
+      // Подписка на удалённый текст
       spectatorRef.child('text').on('value', snap=>{
         const remote = snap.val() ?? "";
         if (remote !== noteEl.value) {
@@ -59,27 +67,34 @@
     });
   }
 
-  joinBtn.onclick = ()=>{
+  joinBtn && (joinBtn.onclick = ()=>{
     const id = (roomInput.value || "").trim();
     if (!id) return alert('Введите код комнаты');
     joinRoom(id);
-  };
+  });
 
-  if (roomInput.value) joinRoom(roomInput.value);
+  // 1) Если пришёл ?room= — автологин + скрыть UI
+  if (qs.get('room')) {
+    const id = qs.get('room').trim();
+    joinRoom(id, {persist:true});
+  } else {
+    // 2) Иначе, если есть сохранённая — подцепиться к ней (для ярлыка на Домой)
+    const last = localStorage.getItem('magic_notes_last_room');
+    if (last) {
+      joinRoom(last, {persist:false}); // уже сохранена
+    } else {
+      showConnectUi();
+    }
+  }
 
-  // ВСПОМОГАТЕЛЬНОЕ: получить границы текущего слова (по курсору)
+  // --- Вспомогательные функции для автоподбора ---
   function currentWordBounds(text, caret){
-    // слово: буквы/цифры/подчёркивание/кириллица/латиница
     const re = /[0-9A-Za-zА-Яа-яЁё_]/;
-    let s = caret - 1;
-    while (s >= 0 && re.test(text[s])) s--;
-    s++;
-    let e = caret;
-    while (e < text.length && re.test(text[e])) e++;
+    let s = caret - 1; while (s >= 0 && re.test(text[s])) s--; s++;
+    let e = caret; while (e < text.length && re.test(text[e])) e++;
     return {start:s, end:e};
   }
 
-  // Подстановка центрального слова (тап по капсуле)
   centerWordEl.addEventListener('click', ()=>{
     if (!autofillActive || !targetWord) return;
     const t = noteEl.value;
@@ -92,21 +107,17 @@
     queueSave();
   });
 
-  // Автоподмена первых N символов текущего слова
   function applyAutofillOnInput(){
     if (!autofillActive || !targetWord || prefixLen <= 0) return false;
-
     const t = noteEl.value;
     const caret = noteEl.selectionStart || 0;
     const {start, end} = currentWordBounds(t, caret);
     const word = t.slice(start, end);
-
-    // Только если курсор внутри слова и длина слова <= prefixLen
     if (word.length === 0) return false;
 
     const k = Math.min(prefixLen, targetWord.length);
     if (word.length <= k) {
-      const forced = targetWord.slice(0, word.length); // ровно столько, сколько ввёл
+      const forced = targetWord.slice(0, word.length);
       if (word !== forced) {
         const newText = t.slice(0,start) + forced + t.slice(end);
         const shift = forced.length - word.length;
@@ -119,7 +130,6 @@
     return false;
   }
 
-  // Отправка текста в БД (debounce)
   let saveT = null;
   function queueSave(){
     if (!spectatorRef) return;
@@ -132,29 +142,10 @@
     }, 120);
   }
 
-  // Основной обработчик ввода
   noteEl.addEventListener('input', ()=>{
     if (applyingRemote) return;
-    const changed = applyAutofillOnInput(); // может поправить текст/каретку
+    applyAutofillOnInput();
     queueSave();
   });
 
-})();
-// --- A2HS подсказка (iOS standalone) ---
-(function a2hsHint(){
-  const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
-  const isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent);
-
-  if (!isStandalone && isIOS) {
-    const tip = document.createElement('div');
-    tip.innerHTML = 'Добавь на Домой: <b>Поделиться</b> → <b>На экран «Домой»</b>';
-    Object.assign(tip.style, {
-      position:'fixed', left:'50%', transform:'translateX(-50%)',
-      bottom: 'calc(60px + var(--safe-bottom))',
-      background:'#111', color:'#fff', padding:'10px 12px', borderRadius:'12px',
-      fontSize:'14px', opacity:'0.9', zIndex:'999'
-    });
-    document.body.appendChild(tip);
-    setTimeout(()=> tip.remove(), 5000);
-  }
 })();
