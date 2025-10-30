@@ -1,20 +1,31 @@
 <!doctype html>
 <html lang="ru">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
-  <title>Заметки</title>
-  <link rel="stylesheet" href="../shared/ui-ios.css" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,maximum-scale=1,user-scalable=no" />
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <link rel="manifest" href="./manifest.json">
   <link rel="apple-touch-icon" href="./icons/ios-180.png">
+
   <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+  <script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js').catch(console.error);
+    });
+  }
+</script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
   <script src="../shared/firebase-init.js"></script>
   <style>
+  :root { --safe-bottom: env(safe-area-inset-bottom); }
+  body { padding-bottom: calc(44px + var(--safe-bottom)); } /* место под автопанель */
+  .autobar{
+    position:fixed; left:0; right:0; bottom:0;
+    padding:8px calc(8px + env(safe-area-inset-right)) calc(8px + var(--safe-bottom)) calc(8px + env(safe-area-inset-left));
+  }
     textarea{
       width:100%; min-height:60vh; border:none; outline:none; resize:none;
       font:16px/1.45 -apple-system,BlinkMacSystemFont,Inter,Segoe UI,Roboto,system-ui,sans-serif;
