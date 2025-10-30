@@ -1,0 +1,11 @@
+{
+  "name": "Заметки",
+  "short_name": "Заметки",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#f6f6f6",
+  "icons": [
+    { "src": "./icons/ios-180.png", "sizes": "180x180", "type": "image/png" }
+  ]
+}
