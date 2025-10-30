@@ -43,11 +43,17 @@
 <body>
   <div class="navbar">Заметки</div>
   <div class="container">
-    <p style="color:var(--muted)">Добавь на Домой: <em>Share → Add to Home Screen</em></p>
+  <!-- Блок подключения (будет скрыт, если пришёл ?room= или есть сохранённая комната) -->
+  <div id="connectUI">
     <label>Код комнаты: <input id="room" class="code" placeholder="XXXXXX" style="letter-spacing:2px"/></label>
     <button class="btn" id="join">Подключиться</button>
-    <textarea id="note" placeholder="Пиши здесь…"></textarea>
+    <p style="color:var(--muted);margin-top:6px">Совет: откройте ссылку вида <span class="code">…/notes/?room=666666</span>, добавьте на Домой — и приложение будет открываться сразу в нужной комнате.</p>
   </div>
+
+  <!-- Само поле заметок -->
+  <textarea id="note" placeholder="Пиши здесь…"></textarea>
+</div>
+
 
   <div class="autobar" id="autobar" style="display:none">
     <span class="chip">пример</span>
