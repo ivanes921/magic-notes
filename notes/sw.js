@@ -1,4 +1,4 @@
-const CACHE_NAME = 'notes-shell-v3';
+const CACHE_NAME = 'notes-shell-v4';
 const LAST_ROOM_KEY = './last-room';
 const ASSETS = [
   './index.html',
@@ -42,6 +42,18 @@ self.addEventListener('message', (event)=>{
   if (data.type === 'notes:set-last-room') {
     const room = typeof data.room === 'string' ? data.room.toUpperCase() : '';
     event.waitUntil(setLastRoom(room));
+    return;
+  }
+
+  if (data.type === 'notes:request-last-room') {
+    event.waitUntil((async () => {
+      const room = await getLastRoom();
+      if (!room) return;
+      const target = event.source;
+      if (target && typeof target.postMessage === 'function') {
+        target.postMessage({ type: 'notes:last-room', room });
+      }
+    })());
   }
 });
 
