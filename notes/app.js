@@ -3,8 +3,6 @@
   const db = window.firebaseDb;
 
   const qs = new URLSearchParams(location.search);
-  const roomInput = document.getElementById('room');
-  const joinBtn = document.getElementById('join');
   const noteEl = document.getElementById('note');
   const connectUI = document.getElementById('connectUI');
   const menuBtn = document.querySelector('[data-role="menu"]');
@@ -15,13 +13,14 @@
   const doneBtn = document.querySelector('[data-role="done"]');
   const cancelBtn = document.querySelector('[data-role="cancel"]');
   const statusBarMeta = document.getElementById('status-bar-style');
-  const currentRoomEl = document.getElementById('currentRoom');
+  const currentRoomEl = document.getElementById('connectionStatus');
 
   const autobar = document.getElementById('autobar');
   const centerWordEl = document.getElementById('centerWord');
 
   const darkScheme = window.matchMedia('(prefers-color-scheme: dark)');
   const TEXT_BLOCK_SELECTOR = '.title, .body';
+  const ROOM_CODE_PATTERN = /^[A-Z0-9]{6}$/;
 
   let roomId = null;
   let roomRef = null;
@@ -35,6 +34,7 @@
 
   let applyingRemote = false;
   let cancelEverShown = false;
+  let initialAutoJoinResolved = false;
 
   function applyStatusBarStyle(){
     if (!statusBarMeta) return;
@@ -330,12 +330,17 @@
     if (!connectUI) return;
     connectUI.classList.add('hidden');
     connectUI.setAttribute('aria-hidden', 'true');
+    if (menuBtn) {
+      menuBtn.setAttribute('aria-expanded', 'false');
+    }
   }
   function showConnectUi(){
     if (!connectUI) return;
     connectUI.classList.remove('hidden');
     connectUI.setAttribute('aria-hidden', 'false');
-    roomInput?.focus({preventScroll:true});
+    if (menuBtn) {
+      menuBtn.setAttribute('aria-expanded', 'true');
+    }
   }
 
   function toggleAutobar(){
@@ -351,7 +356,97 @@
 
   function updateCurrentRoomDisplay(code){
     if (!currentRoomEl) return;
-    currentRoomEl.textContent = code && code.length ? code : '—';
+    currentRoomEl.textContent = '';
+    if (code && code.length) {
+      currentRoomEl.append('Подключено к комнате: ');
+      const codeEl = document.createElement('span');
+      codeEl.className = 'code';
+      codeEl.textContent = code;
+      currentRoomEl.appendChild(codeEl);
+      currentRoomEl.setAttribute('data-connected', 'true');
+    } else {
+      currentRoomEl.textContent = 'Не подключено';
+      currentRoomEl.setAttribute('data-connected', 'false');
+    }
+  }
+
+  function notifyServiceWorker(room){
+    if (!('serviceWorker' in navigator)) return;
+    const message = { type: 'notes:set-last-room', room };
+    const controller = navigator.serviceWorker.controller;
+    if (controller) {
+      controller.postMessage(message);
+      return;
+    }
+
+    navigator.serviceWorker.ready
+      .then(reg => {
+        (reg.active || reg.waiting)?.postMessage(message);
+      })
+      .catch(()=>{});
+  }
+
+  function rememberLastRoom(room){
+    if (!room) return;
+    try {
+      localStorage.setItem('magic_notes_last_room', room);
+    } catch (e) {}
+    notifyServiceWorker(room);
+  }
+
+  function syncLastRoom(room){
+    if (!room) return;
+    notifyServiceWorker(room);
+  }
+
+  function getStoredLastRoom(){
+    try {
+      return localStorage.getItem('magic_notes_last_room') || '';
+    } catch (e) {
+      return '';
+    }
+  }
+
+  function requestLastRoomFromServiceWorker(){
+    if (initialAutoJoinResolved) return;
+    if (!('serviceWorker' in navigator)) return;
+
+    const message = { type: 'notes:request-last-room' };
+
+    const send = target => {
+      if (!target) return false;
+      try {
+        target.postMessage(message);
+        return true;
+      } catch (e) {
+        return false;
+      }
+    };
+
+    if (send(navigator.serviceWorker.controller)) {
+      return;
+    }
+
+    navigator.serviceWorker.ready
+      .then(reg => {
+        send(reg.active || reg.waiting);
+      })
+      .catch(()=>{});
+  }
+
+  if ('serviceWorker' in navigator && typeof navigator.serviceWorker.addEventListener === 'function') {
+    navigator.serviceWorker.addEventListener('message', event => {
+      if (!event.data || typeof event.data !== 'object') return;
+      if (event.data.type !== 'notes:last-room') return;
+      const room = typeof event.data.room === 'string' ? event.data.room.trim() : '';
+      if (!room || initialAutoJoinResolved) return;
+      initialAutoJoinResolved = true;
+      joinRoom(room, {persist:true});
+    });
+
+    navigator.serviceWorker.addEventListener('controllerchange', () => {
+      requestLastRoomFromServiceWorker();
+    });
   }
 
   function detachRoomListeners(){
@@ -380,7 +475,11 @@
     roomRef = db.ref(`rooms/${roomId}`);
     spectatorRef = roomRef.child('spectator');
 
-    if (persist) localStorage.setItem('magic_notes_last_room', roomId);
+    if (persist) {
+      rememberLastRoom(roomId);
+    } else {
+      syncLastRoom(roomId);
+    }
 
     hideConnectUi();
     cancelEverShown = false;
@@ -389,7 +488,10 @@
     roomRef.child('active').once('value').then(s=>{
       if(!s.val()){
         alert('Комната закрыта или не существует.');
-        updateCurrentRoomDisplay('—');
+        roomId = null;
+        roomRef = null;
+        spectatorRef = null;
+        updateCurrentRoomDisplay(null);
         showConnectUi();
         return;
       }
@@ -421,17 +523,6 @@
     });
   }
 
-  joinBtn && (joinBtn.onclick = ()=>{
-    const id = (roomInput.value || '').trim();
-    if (!id) return alert('Введите код комнаты');
-    joinRoom(id);
-    roomInput.value = '';
-  });
-
-  roomInput?.addEventListener('input', () => {
-    roomInput.value = roomInput.value.toUpperCase();
-  });
-
   menuBtn && menuBtn.addEventListener('click', ()=>{
     if (!connectUI) return;
     const willShow = connectUI.classList.contains('hidden');
@@ -444,14 +535,19 @@
 
   if (qs.get('room')) {
     const id = qs.get('room').trim();
-    joinRoom(id, {persist:true});
+    if (id) {
+      initialAutoJoinResolved = true;
+      joinRoom(id, {persist:true});
+    }
   } else {
-    const last = localStorage.getItem('magic_notes_last_room');
+    const last = getStoredLastRoom();
     if (last) {
+      initialAutoJoinResolved = true;
       joinRoom(last, {persist:false});
     } else {
-      updateCurrentRoomDisplay('—');
-      showConnectUi();
+      updateCurrentRoomDisplay(null);
+      hideConnectUi();
+      requestLastRoomFromServiceWorker();
     }
   }
 
@@ -545,7 +641,14 @@
   });
 
   attachButton(doneBtn, () => {
-    noteEl?.blur();
+    if (!noteEl) return;
+    const candidate = getNoteText().trim().toUpperCase();
+    if (candidate && ROOM_CODE_PATTERN.test(candidate)) {
+      initialAutoJoinResolved = true;
+      joinRoom(candidate);
+      setNoteText('');
+    }
+    noteEl.blur();
   });
 
   attachButton(cancelBtn, () => {
