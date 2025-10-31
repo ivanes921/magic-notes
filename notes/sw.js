@@ -1,6 +1,5 @@
-const CACHE_NAME = 'notes-shell-v1';
+const CACHE_NAME = 'notes-shell-v2';
 const ASSETS = [
-  './',
   './index.html',
   './app.js',
   './manifest.json',
@@ -21,11 +20,27 @@ self.addEventListener('activate', (e)=>{
 });
 
 // Cache-first для статики
-self.addEventListener('fetch', (e)=>{
-  const url = new URL(e.request.url);
+self.addEventListener('fetch', (event)=>{
+  const url = new URL(event.request.url);
+
+  if (event.request.mode === 'navigate') {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          const copy = response.clone();
+          caches.open(CACHE_NAME).then(cache => {
+            cache.put('./index.html', copy);
+          });
+          return response;
+        })
+        .catch(() => caches.match('./index.html'))
+    );
+    return;
+  }
+
   if (url.origin === location.origin) {
-    e.respondWith(
-      caches.match(e.request).then(res => res || fetch(e.request))
+    event.respondWith(
+      caches.match(event.request).then(res => res || fetch(event.request))
     );
   }
 });
