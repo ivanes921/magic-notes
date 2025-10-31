@@ -231,6 +231,7 @@ L8.78711 0.408203C9.05924 0.136068 9.39225 0 9.78613 0C10.0583 0 10.3018 0.06445
     const statusBarMeta = document.getElementById('status-bar-style');
     let cancelEverShown = false;
     const darkScheme = window.matchMedia('(prefers-color-scheme: dark)');
+    let isEditing = false;
 
     function applyStatusBarStyle(){
       if (!statusBarMeta){
@@ -469,6 +470,7 @@ L8.78711 0.408203C9.05924 0.136068 9.39225 0 9.78613 0C10.0583 0 10.3018 0.06445
     }
 
     note.addEventListener('focus', () => {
+      isEditing = true;
       ensureBlocks();
       updateActionState();
     });
