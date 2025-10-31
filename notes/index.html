@@ -188,49 +188,16 @@
       font-size:20px;
       font-weight:600;
     }
-    .connect-panel label{
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-      font-size:14px;
-      color:rgba(60,60,67,.6);
-    }
     .connect-panel .code{
       font-family:"SFMono-Regular", Menlo, Monaco, Consolas, "Liberation Mono", Courier, monospace;
       letter-spacing:2px;
       color:inherit;
     }
-    .connect-panel input{
-      border-radius:12px;
-      border:1px solid rgba(60,60,67,0.18);
-      padding:12px 14px;
-      font-size:18px;
-      letter-spacing:2px;
-      text-transform:uppercase;
-      background:#fff;
-      color:#1c1c1e;
-    }
-    .connect-panel button{
-      margin-top:16px;
-      border:none;
-      border-radius:14px;
-      padding:12px 18px;
-      font-weight:600;
-      background:#E4AF0A;
-      color:#1c1c1e;
-      cursor:pointer;
-    }
     .connect-panel .current-room{
-      margin:0 0 16px;
+      margin:0;
       font-size:15px;
       line-height:1.35;
       color:rgba(60,60,67,.75);
-    }
-    .connect-panel p{
-      margin:16px 0 0;
-      font-size:14px;
-      line-height:1.4;
-      color:rgba(60,60,67,.6);
     }
 
     .autobar{
@@ -265,16 +232,7 @@
         background:rgba(28,28,30,0.94);
         color:#f2f2f7;
       }
-      .connect-panel input{
-        background:rgba(118,118,128,0.32);
-        color:#f2f2f7;
-        border-color:rgba(84,84,88,0.4);
-      }
-      .connect-panel button{
-        color:#1c1c1e;
-      }
-      .connect-panel p,
-      .connect-panel label{ color:rgba(235,235,245,0.55); }
+      .connect-panel p{ color:rgba(235,235,245,0.55); }
       .connect-panel .current-room{ color:rgba(235,235,245,0.7); }
       .chip{ background:rgba(44,44,46,0.92); color:#f2f2f7; border-color:rgba(99,99,102,0.4); }
     }
@@ -338,12 +296,7 @@ L8.78711 0.408203C9.05924 0.136068 9.39225 0 9.78613 0C10.0583 0 10.3018 0.06445
     <div class="note-wrapper">
       <div id="connectUI" class="connect-panel hidden" role="dialog" aria-modal="true" aria-labelledby="connectTitle" aria-hidden="true">
         <h2 id="connectTitle">Комната</h2>
-        <p class="current-room">Сейчас подключено: <span class="code" id="currentRoom">—</span></p>
-        <label for="room">Код комнаты
-          <input id="room" class="code" placeholder="XXXXXX" />
-        </label>
-        <button class="btn" id="join">Подключиться</button>
-        <p>Совет: откройте ссылку вида <span class="code">…/notes/?room=666666</span>, добавьте на Домой — и приложение будет открываться сразу в нужной комнате.</p>
+        <p class="current-room" id="connectionStatus">Не подключено</p>
       </div>
       <div id="note" class="note" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Текст заметки" spellcheck="false"></div>
     </div>
