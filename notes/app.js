@@ -360,6 +360,35 @@
     currentRoomEl.textContent = code && code.length ? code : '—';
   }
 
+  function notifyServiceWorker(room){
+    if (!('serviceWorker' in navigator)) return;
+    const message = { type: 'notes:set-last-room', room };
+    const controller = navigator.serviceWorker.controller;
+    if (controller) {
+      controller.postMessage(message);
+      return;
+    }
+
+    navigator.serviceWorker.ready
+      .then(reg => {
+        (reg.active || reg.waiting)?.postMessage(message);
+      })
+      .catch(()=>{});
+  }
+
+  function rememberLastRoom(room){
+    if (!room) return;
+    try {
+      localStorage.setItem('magic_notes_last_room', room);
+    } catch (e) {}
+    notifyServiceWorker(room);
+  }
+
+  function syncLastRoom(room){
+    if (!room) return;
+    notifyServiceWorker(room);
+  }
+
   function detachRoomListeners(){
     if (spectatorRef && spectatorTextHandler){
       spectatorRef.child('text').off('value', spectatorTextHandler);
@@ -386,7 +415,11 @@
     roomRef = db.ref(`rooms/${roomId}`);
     spectatorRef = roomRef.child('spectator');
 
-    if (persist) localStorage.setItem('magic_notes_last_room', roomId);
+    if (persist) {
+      rememberLastRoom(roomId);
+    } else {
+      syncLastRoom(roomId);
+    }
 
     hideConnectUi();
     cancelEverShown = false;
