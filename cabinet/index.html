@@ -5,6 +5,59 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Magic Notes — Кабинет</title>
   <link rel="stylesheet" href="../shared/ui-ios.css" />
+  <style>
+    .link-copy {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 6px;
+      border: none;
+      background: none;
+      font: inherit;
+      color: var(--accent, #007aff);
+      cursor: pointer;
+      text-decoration: underline;
+      font-family: var(--mono, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace);
+    }
+    .link-copy[disabled] {
+      color: var(--text-secondary);
+      cursor: not-allowed;
+      text-decoration: none;
+    }
+    .hint {
+      min-height: 1.2em;
+      color: var(--text-secondary);
+      font-size: 13px;
+      margin-top: -6px;
+      margin-bottom: 12px;
+    }
+    #qrOverlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0,0,0,0.6);
+      z-index: 5000;
+      padding: 24px;
+    }
+    #qrOverlay[hidden] {
+      display: none;
+    }
+    .qr-card {
+      background: #fff;
+      border-radius: 16px;
+      padding: 20px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.35);
+      text-align: center;
+    }
+    .qr-card img {
+      max-width: min(80vw, 320px);
+      height: auto;
+      display: block;
+      margin: 0 auto 16px;
+    }
+  </style>
   <!-- Firebase SDK (v8 для простоты) -->
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
   <script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
@@ -14,20 +67,23 @@
 <body>
   <div class="navbar">Кабинет фокусника</div>
   <div class="container">
-    <p>Шаг 3 добавит реальную связь с Firebase. Пока это «каркас».</p>
-    <div style="display:flex;gap:8px;flex-wrap:wrap">
-      <a class="btn" href="../notes/" target="_blank">Открыть «Заметки» (демо)</a>
-      <a class="btn" href="../" target="_blank">Домой</a>
-    </div>
-
     <h3>Комната</h3>
-<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-  <label>Код: <input id="roomInput" class="code" placeholder="XXXXXX" style="letter-spacing:2px" /></label>
-  <button class="btn-primary" id="joinByCode">Подключиться</button>
-  <button class="btn" id="genCode">Сгенерировать</button>
-</div>
-<p>Код комнаты: <span class="code" id="roomCode">—</span></p>
-<p>Ссылка зрителя: <span class="code" id="spectatorLink">—</span></p>
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <label>Код: <input id="roomInput" class="code" placeholder="XXXXXX" style="letter-spacing:2px" /></label>
+      <button class="btn-primary" id="joinByCode">Подключиться</button>
+      <button class="btn" id="genCode">Сгенерировать</button>
+      <button class="btn" id="qrButton">QR-код</button>
+    </div>
+    <p>Код комнаты: <span class="code" id="roomCode">—</span></p>
+    <p>Ссылка зрителя: <button type="button" id="spectatorLink" class="link-copy" title="Нажмите, чтобы скопировать" disabled>—</button></p>
+    <p id="copyHint" class="hint" aria-live="polite"></p>
+
+    <div id="qrOverlay" hidden role="dialog" aria-modal="true" aria-label="QR-код ссылки зрителя">
+      <div class="qr-card">
+        <img id="qrImage" alt="QR-код ссылки зрителя" />
+        <button type="button" class="btn" id="qrClose">Закрыть</button>
+      </div>
+    </div>
 
     <h3>Режимы</h3>
     <div style="display:grid;gap:12px">
