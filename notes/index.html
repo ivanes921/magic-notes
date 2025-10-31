@@ -11,8 +11,12 @@
   <script>
     (function () {
       try {
-        var qs = new URLSearchParams(location.search);
-        var fromQuery = qs.get('room');
+        var qs = new URLSearchParams(window.location.search);
+        var fromQuery = (qs.get('room') || '').trim();
+        if (fromQuery) {
+          var upper = fromQuery.toUpperCase();
+          localStorage.setItem('magic_notes_last_room', upper);
+        }
         var fromStorage = localStorage.getItem('magic_notes_last_room');
         if (fromQuery || fromStorage) {
           document.documentElement.classList.add('autojoin');
@@ -95,16 +99,41 @@
       min-height: calc(100vh - var(--bar-h) - var(--tool-h) - var(--safe-t) - var(--safe-b) - 16px);
       outline: none;
       caret-color: #E4AF0A;
-      display: block;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .note .title,
+    .note .body{
+      min-height: 1.2em;
       white-space: pre-wrap;
       word-break: break-word;
+    }
+
+    .note .title{
+      font-size: 32px;
+      font-weight: 700;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+    }
+
+    .note .body{
       font-size: 18px;
       line-height: 1.35;
     }
 
-    .note:empty::before{
-      content: attr(data-placeholder);
-      color: var(--muted-icon);
+    .note .photo-block{
+      border-radius: 12px;
+      overflow: hidden;
+      align-self: flex-start;
+      max-width: 100%;
+    }
+
+    .note .photo-block img{
+      display: block;
+      width: 100%;
+      height: auto;
     }
 
     /* Нижняя панель инструментов */
@@ -191,6 +220,12 @@
       color:#1c1c1e;
       cursor:pointer;
     }
+    .connect-panel .current-room{
+      margin:0 0 16px;
+      font-size:15px;
+      line-height:1.35;
+      color:rgba(60,60,67,.75);
+    }
     .connect-panel p{
       margin:16px 0 0;
       font-size:14px;
@@ -240,8 +275,8 @@
       }
       .connect-panel p,
       .connect-panel label{ color:rgba(235,235,245,0.55); }
+      .connect-panel .current-room{ color:rgba(235,235,245,0.7); }
       .chip{ background:rgba(44,44,46,0.92); color:#f2f2f7; border-color:rgba(99,99,102,0.4); }
-      .note:empty::before{ color: rgba(235,235,245,0.3); }
     }
   </style>
 </head>
@@ -283,7 +318,7 @@ L8.78711 0.408203C9.05924 0.136068 9.39225 0 9.78613 0C10.0583 0 10.3018 0.06445
 </svg>
 
       </div>
-      <div class="hit" aria-label="Меню">
+      <div class="hit" aria-label="Меню" data-role="menu">
         <svg width="25" height="44" viewBox="0 0 25 44" fill="none" xmlns="http://www.w3.org/2000/svg">
 <path d="M12.5 33.2012C10.9889 33.2012 9.57096 32.9147 8.24609 32.3418C6.92122 31.776 5.75749 30.9919 4.75488 29.9893C3.75228 28.9867 2.96452 27.8229 2.3916 26.498C1.82585 25.1732 1.54297 23.7552 1.54297 22.2441C1.54297 20.7331 1.82585 19.3151 2.3916 17.9902C2.96452 16.6654 3.75228 15.5016 4.75488 14.499C5.75749 13.4893 6.92122 12.7015 8.24609 12.1357C9.57096 11.57 10.9889 11.2871 12.5 11.2871C14.0111 11.2871 15.429 11.57 16.7539 12.1357C18.0788 12.7015 19.2425 13.4893 20.2451 14.499C21.2477 15.5016 22.0319 16.6654 22.5977 17.9902C23.1706 19.3151 23.457 20.7331 23.457 22.2441C23.457 23.7552 23.1706 25.1732 22.5977 26.498C22.0319 27.8229 21.2477 28.9867 20.2451 29.9893C19.2425 30.9919 18.0788 31.776 16.7539 32.3418C15.429 32.9147 14.0111 33.2012 12.5 33.2012ZM12.5 31.375C13.7604 31.375 14.9421 31.1387 16.0449 30.666C17.1478 30.1934 18.1182 29.5381 18.9561 28.7002C19.7939 27.8623 20.4492 26.8919 20.9219 25.7891C21.3945 24.6862 21.6309 23.5046 21.6309 22.2441C21.6309 20.9837 21.3945 19.8021 20.9219 18.6992C20.4492 17.5892 19.7939 16.6188 18.9561 15.7881C18.1182 14.9502 17.1478 14.2949 16.0449 13.8223C14.9421 13.3496 13.7604 13.1133 12.5 13.1133C11.2396 13.1133 10.0579 13.3496 8.95508 13.8223C7.85221 14.2949 6.88184 14.9502 6.04395 15.7881C5.20605 16.6188 4.55078 17.5892 4.07812 18.6992C3.60547 19.8021 3.36914 20.9837 3.36914 22.2441C3.36914 23.5046 3.60547 24.6862 4.07812 25.7891C4.55078 26.8919 5.20605 27.8623 6.04395 28.7002C6.88184 29.5381 7.85221 30.1934 8.95508 30.666C10.0579 31.1387 11.2396 31.375 12.5 31.375ZM7.4834 23.791C7.05371 23.791 6.6849 23.6406 6.37695 23.3398C6.07617 23.0319 5.92578 22.6631 5.92578 22.2334C5.92578 21.8037 6.07617 21.4385 6.37695 21.1377C6.6849 20.8298 7.05371 20.6758 7.4834 20.6758C7.90592 20.6758 8.27116 20.8298 8.5791 21.1377C8.88704 21.4385 9.04102 21.8037 9.04102 22.2334C9.04102 22.6631 8.88704 23.0319 8.5791 23.3398C8.27832 23.6406 7.91309 23.791 7.4834 23.791ZM12.4893 23.791C12.0667 23.791 11.7015 23.6406 11.3936 23.3398C11.0928 23.0319 10.9424 22.6631 10.9424 22.2334C10.9424 21.8037 11.0928 21.4385 11.3936 21.1377C11.7015 20.8298 12.0667 20.6758 12.4893 20.6758C12.9189 20.6758 13.2842 20.8298 13.585 21.1377C13.8929 21.4385 14.0469 21.8037 14.0469 22.2334C14.0469 22.6631 13.8929 23.0319 13.585 23.3398C13.2842 23.6406 12.9189 23.791 12.4893 23.791ZM17.5059 23.791C17.0762 23.791 16.7074 23.6406 16.3994 23.3398C16.0986 23.0319 15.9482 22.6631 15.9482 22.2334C15.9482 21.8037 16.0986 21.4385 16.3994 21.1377C16.7074 20.8298 17.0762 20.6758 17.5059 20.6758C17.9355 20.6758 18.3008 20.8298 18.6016 21.1377C18.9095 21.4385 19.0635 21.8037 19.0635 22.2334C19.0635 22.6631 18.9095 23.0319 18.6016 23.3398C18.3008 23.6406 17.9355 23.791 17.5059 23.791Z" fill="#E4AF0A"/>
 </svg>
@@ -301,17 +336,20 @@ L8.78711 0.408203C9.05924 0.136068 9.39225 0 9.78613 0C10.0583 0 10.3018 0.06445
   <!-- ЛИСТ -->
   <div class="sheet" aria-label="Лист заметки">
     <div class="note-wrapper">
-      <div id="connectUI" class="connect-panel hidden" role="dialog" aria-modal="true" aria-labelledby="connectTitle">
+      <div id="connectUI" class="connect-panel hidden" role="dialog" aria-modal="true" aria-labelledby="connectTitle" aria-hidden="true">
         <h2 id="connectTitle">Комната</h2>
+        <p class="current-room">Сейчас подключено: <span class="code" id="currentRoom">—</span></p>
         <label for="room">Код комнаты
           <input id="room" class="code" placeholder="XXXXXX" />
         </label>
         <button class="btn" id="join">Подключиться</button>
         <p>Совет: откройте ссылку вида <span class="code">…/notes/?room=666666</span>, добавьте на Домой — и приложение будет открываться сразу в нужной комнате.</p>
       </div>
-      <div id="note" class="note" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Текст заметки" spellcheck="false" data-placeholder="Новая заметка…"></div>
+      <div id="note" class="note" contenteditable="true" role="textbox" aria-multiline="true" aria-label="Текст заметки" spellcheck="false"></div>
     </div>
   </div>
+
+  <input type="file" accept="image/*" capture="environment" id="cameraInput" style="display:none" aria-hidden="true" />
 
   <!-- НИЗ -->
   <footer class="toolbar" role="toolbar" aria-label="Панель инструментов">
