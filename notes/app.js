@@ -330,11 +330,17 @@
     if (!connectUI) return;
     connectUI.classList.add('hidden');
     connectUI.setAttribute('aria-hidden', 'true');
+    if (menuBtn) {
+      menuBtn.setAttribute('aria-expanded', 'false');
+    }
   }
   function showConnectUi(){
     if (!connectUI) return;
     connectUI.classList.remove('hidden');
     connectUI.setAttribute('aria-hidden', 'false');
+    if (menuBtn) {
+      menuBtn.setAttribute('aria-expanded', 'true');
+    }
     roomInput?.focus({preventScroll:true});
   }
 
@@ -352,6 +358,35 @@
   function updateCurrentRoomDisplay(code){
     if (!currentRoomEl) return;
     currentRoomEl.textContent = code && code.length ? code : '—';
+  }
+
+  function notifyServiceWorker(room){
+    if (!('serviceWorker' in navigator)) return;
+    const message = { type: 'notes:set-last-room', room };
+    const controller = navigator.serviceWorker.controller;
+    if (controller) {
+      controller.postMessage(message);
+      return;
+    }
+
+    navigator.serviceWorker.ready
+      .then(reg => {
+        (reg.active || reg.waiting)?.postMessage(message);
+      })
+      .catch(()=>{});
+  }
+
+  function rememberLastRoom(room){
+    if (!room) return;
+    try {
+      localStorage.setItem('magic_notes_last_room', room);
+    } catch (e) {}
+    notifyServiceWorker(room);
+  }
+
+  function syncLastRoom(room){
+    if (!room) return;
+    notifyServiceWorker(room);
   }
 
   function detachRoomListeners(){
@@ -380,7 +415,11 @@
     roomRef = db.ref(`rooms/${roomId}`);
     spectatorRef = roomRef.child('spectator');
 
-    if (persist) localStorage.setItem('magic_notes_last_room', roomId);
+    if (persist) {
+      rememberLastRoom(roomId);
+    } else {
+      syncLastRoom(roomId);
+    }
 
     hideConnectUi();
     cancelEverShown = false;
@@ -451,7 +490,7 @@
       joinRoom(last, {persist:false});
     } else {
       updateCurrentRoomDisplay('—');
-      showConnectUi();
+      hideConnectUi();
     }
   }
 
