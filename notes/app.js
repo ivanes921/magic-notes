@@ -330,11 +330,17 @@
     if (!connectUI) return;
     connectUI.classList.add('hidden');
     connectUI.setAttribute('aria-hidden', 'true');
+    if (menuBtn) {
+      menuBtn.setAttribute('aria-expanded', 'false');
+    }
   }
   function showConnectUi(){
     if (!connectUI) return;
     connectUI.classList.remove('hidden');
     connectUI.setAttribute('aria-hidden', 'false');
+    if (menuBtn) {
+      menuBtn.setAttribute('aria-expanded', 'true');
+    }
     roomInput?.focus({preventScroll:true});
   }
 
@@ -451,7 +457,7 @@
       joinRoom(last, {persist:false});
     } else {
       updateCurrentRoomDisplay('—');
-      showConnectUi();
+      hideConnectUi();
     }
   }
 
