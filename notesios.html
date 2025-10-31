@@ -211,20 +211,22 @@ L8.78711 0.408203C9.05924 0.136068 9.39225 0 9.78613 0C10.0583 0 10.3018 0.06445
     const statusBarMeta = document.getElementById('status-bar-style');
     const darkScheme = window.matchMedia('(prefers-color-scheme: dark)');
 
-    function applyStatusBarStyle(source){
+    function applyStatusBarStyle(){
       if (!statusBarMeta){
         return;
       }
-      const isDark = typeof source.matches === 'boolean' ? source.matches : darkScheme.matches;
-      statusBarMeta.setAttribute('content', isDark ? 'black' : 'default');
+      statusBarMeta.setAttribute('content', darkScheme.matches ? 'black-translucent' : 'default');
     }
 
-    applyStatusBarStyle(darkScheme);
+    applyStatusBarStyle();
     if (typeof darkScheme.addEventListener === 'function'){
       darkScheme.addEventListener('change', applyStatusBarStyle);
     } else if (typeof darkScheme.addListener === 'function'){
       darkScheme.addListener(applyStatusBarStyle);
     }
+
+    window.addEventListener('pageshow', applyStatusBarStyle);
+    document.addEventListener('visibilitychange', applyStatusBarStyle);
 
     if (!sheet || !note) {
       return;
