@@ -7,6 +7,7 @@
   const joinBtn = document.getElementById('join');
   const noteEl = document.getElementById('note');
   const connectUI = document.getElementById('connectUI');
+  const menuBtn = document.querySelector('[data-role="menu"]');
 
   const autobar = document.getElementById('autobar');
   const centerWordEl = document.getElementById('centerWord');
@@ -21,22 +22,96 @@
 
   let applyingRemote = false;
 
-  function hideConnectUi(){ if (connectUI) connectUI.style.display = 'none'; }
-  function showConnectUi(){ if (connectUI) connectUI.style.display = ''; }
+  function getNoteText(){
+    if (!noteEl) return '';
+    return (noteEl.innerText || '').replace(/\r/g, '');
+  }
 
-  // --- Подключение к комнате ---
+  function setNoteText(text){
+    if (!noteEl) return;
+    noteEl.textContent = text;
+  }
+
+  function getSelectionOffsets(){
+    const text = getNoteText();
+    if (!noteEl) return {start:text.length, end:text.length};
+    const selection = window.getSelection();
+    if (!selection || selection.rangeCount === 0) return {start:text.length, end:text.length};
+    const range = selection.getRangeAt(0);
+    const preStart = range.cloneRange();
+    preStart.selectNodeContents(noteEl);
+    preStart.setEnd(range.startContainer, range.startOffset);
+    const start = preStart.toString().length;
+    const preEnd = range.cloneRange();
+    preEnd.selectNodeContents(noteEl);
+    preEnd.setEnd(range.endContainer, range.endOffset);
+    const end = preEnd.toString().length;
+    return {start, end};
+  }
+
+  function setCaretPosition(pos){
+    if (!noteEl) return;
+    const selection = window.getSelection();
+    if (!selection) return;
+    const range = document.createRange();
+    let remaining = Math.max(0, pos);
+    let node = noteEl.firstChild;
+    while (node) {
+      if (node.nodeType === Node.TEXT_NODE) {
+        const len = node.textContent.length;
+        if (remaining <= len) {
+          range.setStart(node, remaining);
+          range.collapse(true);
+          selection.removeAllRanges();
+          selection.addRange(range);
+          return;
+        }
+        remaining -= len;
+      }
+      node = node.nextSibling;
+    }
+    range.selectNodeContents(noteEl);
+    range.collapse(false);
+    selection.removeAllRanges();
+    selection.addRange(range);
+  }
+
+  function focusNote(){
+    if (!noteEl) return;
+    noteEl.focus({preventScroll:true});
+  }
+
+  function hideConnectUi(){
+    if (!connectUI) return;
+    connectUI.classList.add('hidden');
+  }
+  function showConnectUi(){
+    if (!connectUI) return;
+    connectUI.classList.remove('hidden');
+    roomInput?.focus({preventScroll:true});
+  }
+
+  function toggleAutobar(){
+    if (!autobar) return;
+    if (autofillActive) {
+      autobar.classList.remove('hidden');
+      autobar.classList.add('active');
+    } else {
+      autobar.classList.add('hidden');
+      autobar.classList.remove('active');
+    }
+  }
+
   function joinRoom(id, {persist=true} = {}){
     roomId = (id || '').toUpperCase();
     if (!roomId) return;
     roomRef = db.ref(`rooms/${roomId}`);
     spectatorRef = roomRef.child('spectator');
 
-    // Сохраняем выбор комнаты, чтобы PWA из ярлыка открывалась сразу в неё
     if (persist) localStorage.setItem('magic_notes_last_room', roomId);
 
     hideConnectUi();
 
-    // Проверим активность
     roomRef.child('active').once('value').then(s=>{
       if(!s.val()){
         alert('Комната закрыта или не существует.');
@@ -44,50 +119,55 @@
         return;
       }
 
-      // Подписка на удалённый текст
       spectatorRef.child('text').on('value', snap=>{
-        const remote = snap.val() ?? "";
-        if (remote !== noteEl.value) {
+        const remote = snap.val() ?? '';
+        if (remote !== getNoteText()) {
           applyingRemote = true;
-          noteEl.value = remote;
+          setNoteText(remote);
           applyingRemote = false;
         }
       });
 
-      // Подписка на настройки автоподбора
       roomRef.child('autofill').on('value', snap=>{
         const v = snap.val() || {};
         autofillActive = !!v.active;
         targetWord = v.targetWord || '';
         prefixLen = typeof v.prefixLen === 'number' ? v.prefixLen : 3;
 
-        centerWordEl.textContent = targetWord || 'слово';
-        autobar.style.display = autofillActive ? 'flex' : 'none';
+        if (centerWordEl) centerWordEl.textContent = targetWord || 'слово';
+        toggleAutobar();
       });
     });
   }
 
   joinBtn && (joinBtn.onclick = ()=>{
-    const id = (roomInput.value || "").trim();
+    const id = (roomInput.value || '').trim();
     if (!id) return alert('Введите код комнаты');
     joinRoom(id);
   });
 
-  // 1) Если пришёл ?room= — автологин + скрыть UI
+  menuBtn && menuBtn.addEventListener('click', ()=>{
+    if (!connectUI) return;
+    const willShow = connectUI.classList.contains('hidden');
+    if (willShow) {
+      showConnectUi();
+    } else {
+      hideConnectUi();
+    }
+  });
+
   if (qs.get('room')) {
     const id = qs.get('room').trim();
     joinRoom(id, {persist:true});
   } else {
-    // 2) Иначе, если есть сохранённая — подцепиться к ней (для ярлыка на Домой)
     const last = localStorage.getItem('magic_notes_last_room');
     if (last) {
-      joinRoom(last, {persist:false}); // уже сохранена
+      joinRoom(last, {persist:false});
     } else {
       showConnectUi();
     }
   }
 
-  // --- Вспомогательные функции для автоподбора ---
   function currentWordBounds(text, caret){
     const re = /[0-9A-Za-zА-Яа-яЁё_]/;
     let s = caret - 1; while (s >= 0 && re.test(text[s])) s--; s++;
@@ -95,22 +175,23 @@
     return {start:s, end:e};
   }
 
-  centerWordEl.addEventListener('click', ()=>{
+  centerWordEl?.addEventListener('click', ()=>{
     if (!autofillActive || !targetWord) return;
-    const t = noteEl.value;
-    const caret = noteEl.selectionStart || 0;
+    focusNote();
+    const t = getNoteText();
+    const caret = getSelectionOffsets().start;
     const {start, end} = currentWordBounds(t, caret);
     const newText = t.slice(0,start) + targetWord + ' ' + t.slice(end);
-    noteEl.value = newText;
+    setNoteText(newText);
     const newCaret = start + targetWord.length + 1;
-    noteEl.setSelectionRange(newCaret, newCaret);
+    setCaretPosition(newCaret);
     queueSave();
   });
 
   function applyAutofillOnInput(){
     if (!autofillActive || !targetWord || prefixLen <= 0) return false;
-    const t = noteEl.value;
-    const caret = noteEl.selectionStart || 0;
+    const t = getNoteText();
+    const caret = getSelectionOffsets().start;
     const {start, end} = currentWordBounds(t, caret);
     const word = t.slice(start, end);
     if (word.length === 0) return false;
@@ -121,9 +202,9 @@
       if (word !== forced) {
         const newText = t.slice(0,start) + forced + t.slice(end);
         const shift = forced.length - word.length;
-        noteEl.value = newText;
+        setNoteText(newText);
         const newCaret = caret + shift;
-        noteEl.setSelectionRange(newCaret, newCaret);
+        setCaretPosition(newCaret);
         return true;
       }
     }
@@ -135,17 +216,22 @@
     if (!spectatorRef) return;
     if (saveT) clearTimeout(saveT);
     saveT = setTimeout(()=>{
+      const text = getNoteText();
+      const caret = getSelectionOffsets().start;
       spectatorRef.update({
-        text: noteEl.value,
-        cursor: noteEl.selectionStart || 0
+        text,
+        cursor: caret
       });
     }, 120);
   }
 
-  noteEl.addEventListener('input', ()=>{
+  noteEl?.addEventListener('input', ()=>{
     if (applyingRemote) return;
     applyAutofillOnInput();
     queueSave();
   });
 
+  noteEl?.addEventListener('focus', ()=>{
+    connectUI && connectUI.classList.add('hidden');
+  });
 })();
