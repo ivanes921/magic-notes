@@ -200,33 +200,6 @@
       color:rgba(60,60,67,.75);
     }
 
-    .autobar{
-      position:fixed;
-      left:0;
-      right:0;
-      bottom:calc(var(--tool-h) + var(--safe-b));
-      padding:8px calc(8px + var(--safe-r)) 12px calc(8px + var(--safe-l));
-      display:flex;
-      gap:8px;
-      justify-content:center;
-      transition:transform .2s ease, opacity .2s ease;
-      pointer-events:none;
-    }
-    .autobar.active{ pointer-events:auto; }
-    .autobar.hidden{
-      transform:translateY(12px);
-      opacity:0;
-    }
-    .chip{
-      padding:8px 14px;
-      border-radius:16px;
-      border:1px solid rgba(60,60,67,0.18);
-      background:rgba(255,255,255,0.92);
-      color:#1c1c1e;
-      font-size:15px;
-    }
-    .chip.center{ font-weight:600; }
-
     @media (prefers-color-scheme: dark){
       .connect-panel{
         background:rgba(28,28,30,0.94);
@@ -234,7 +207,6 @@
       }
       .connect-panel p{ color:rgba(235,235,245,0.55); }
       .connect-panel .current-room{ color:rgba(235,235,245,0.7); }
-      .chip{ background:rgba(44,44,46,0.92); color:#f2f2f7; border-color:rgba(99,99,102,0.4); }
     }
   </style>
 </head>
@@ -334,12 +306,6 @@ L8.78711 0.408203C9.05924 0.136068 9.39225 0 9.78613 0C10.0583 0 10.3018 0.06445
 </svg>
     </div>
   </footer>
-
-  <div class="autobar hidden" id="autobar">
-    <span class="chip">пример</span>
-    <span class="chip center" id="centerWord">слово</span>
-    <span class="chip">текст</span>
-  </div>
 
   <script src="./app.js"></script>
 </body>
