@@ -16,7 +16,9 @@
   const currentRoomEl = document.getElementById('connectionStatus');
 
   const autobar = document.getElementById('autobar');
+  const leftWordEl = document.getElementById('leftWord');
   const centerWordEl = document.getElementById('centerWord');
+  const rightWordEl = document.getElementById('rightWord');
 
   const darkScheme = window.matchMedia('(prefers-color-scheme: dark)');
   const TEXT_BLOCK_SELECTOR = '.title, .body';
@@ -35,6 +37,57 @@
   let applyingRemote = false;
   let cancelEverShown = false;
   let initialAutoJoinResolved = false;
+
+  const AUTOFILL_DICTIONARY = [
+    'автомат', 'автор', 'авторитет', 'авторы', 'акция', 'алгоритм', 'анализ', 'ангел', 'апрель', 'аромат',
+    'база', 'баланс', 'банкир', 'батарея', 'бизнес', 'богатство', 'бонус', 'борода', 'браслет', 'бренд',
+    'вдохновение', 'вежливость', 'вектор', 'велосипед', 'весна', 'взгляд', 'вкусный', 'внимание', 'внутренний', 'возможность',
+    'встреча', 'выбор', 'выгода', 'выступление', 'выход',
+    'гармония', 'гарантия', 'герой', 'глобальный', 'глубина', 'город', 'граница', 'гранит', 'график', 'группа',
+    'движение', 'двойник', 'двора', 'дворец', 'девушка', 'доверие', 'документ', 'долина', 'должен', 'домашний',
+    'достаточно', 'доступ', 'друг', 'дружелюбие', 'дымка',
+    'ежедневник', 'ежик', 'единство', 'ежемесячно', 'ежегодно',
+    'желание', 'женщина', 'живописный', 'жизнь', 'журнал',
+    'забота', 'задача', 'заклинание', 'замок', 'запись', 'заря', 'звонок', 'зеркало', 'зима', 'знание',
+    'игра', 'идея', 'издание', 'изюминка', 'изящный', 'иллюзия', 'император', 'имя', 'инициатива', 'инструмент',
+    'информация', 'искра', 'искусство', 'истина', 'источник',
+    'кабинет', 'кадр', 'камень', 'карета', 'картина', 'карточка', 'качество', 'кейс', 'клиент', 'клуб',
+    'коллекция', 'команда', 'компас', 'конспект', 'контакт', 'контроль', 'конфета', 'коридор', 'космос', 'кристалл',
+    'круг', 'купол', 'курс',
+    'лаборатория', 'легенда', 'лидер', 'личность', 'логика', 'локон', 'лунный', 'лучший',
+    'магия', 'май', 'мастер', 'маяк', 'мелодия', 'мечта', 'милый', 'минутка', 'модель', 'момент',
+    'море', 'мудрость', 'музыка', 'мурашки',
+    'награда', 'надежда', 'напиток', 'настройка', 'начало', 'нежность', 'незабудка', 'некоторый', 'нектар', 'нескучный',
+    'новость', 'ночь', 'нравится',
+    'обаяние', 'облако', 'образ', 'образец', 'объект', 'огни', 'ограда', 'огромный', 'одежда', 'озеро',
+    'океан', 'оливка', 'описание', 'оптимизм', 'опыт', 'орбита', 'орнамент', 'осень', 'ощущение',
+    'павлин', 'павильон', 'пакет', 'пальто', 'панорама', 'парк', 'партнер', 'песни', 'письмо', 'планета',
+    'победа', 'подарок', 'поддержка', 'подробность', 'поезд', 'пойдем', 'поиск', 'пойман', 'позиция', 'показать',
+    'поколение', 'покупка', 'поле', 'помощник', 'порядок', 'послание', 'поток', 'поэзия', 'правда', 'праздник',
+    'предел', 'предмет', 'представление', 'прежний', 'прекрасный', 'пример', 'приоритет', 'приход', 'привет', 'приветик',
+    'привычка', 'призрак', 'приключение', 'приложение', 'принцесса', 'природа', 'приходите', 'прицел', 'причина', 'пришел',
+    'проектор', 'программа', 'продолжение', 'проект', 'профиль', 'прочитать', 'путешествие',
+    'радость', 'район', 'ракурс', 'рассвет', 'рассказ', 'раунд', 'реальность', 'революция', 'результат', 'рекомендация',
+    'ритм', 'ровный', 'романтика', 'роспись', 'рукопись', 'ручей',
+    'сад', 'самоцвет', 'свет', 'свеча', 'секрет', 'семейный', 'сентябрь', 'сердце', 'сигнал', 'сила',
+    'сказка', 'скрипка', 'след', 'слово', 'случай', 'смысл', 'событие', 'совет', 'создание', 'созвездие',
+    'соната', 'сонет', 'соревнование', 'спектакль', 'спокойствие', 'спорт', 'способность', 'справедливость', 'среда', 'стиль',
+    'страница', 'строка', 'структура', 'студия', 'счастье', 'символ',
+    'талант', 'танец', 'творчество', 'текст', 'тембр', 'терраса', 'технология', 'тишина', 'традиция', 'тренировка',
+    'тропинка', 'турнир',
+    'уверенность', 'угол', 'узор', 'улыбка', 'умение', 'университет', 'уровень', 'успех', 'утро',
+    'фантазия', 'февраль', 'фестиваль', 'философия', 'форма', 'фортепиано', 'фотография', 'фраза', 'фреска',
+    'хитрость', 'хобби', 'хрусталь', 'художник',
+    'цветок', 'цель', 'церемония', 'центр', 'цепочка',
+    'чарующий', 'частица', 'чернила', 'чудо', 'чувство',
+    'шанс', 'шарм', 'школа', 'шляпа', 'шоу',
+    'щедрость',
+    'экзамен', 'эксперт', 'экспозиция', 'эксперимент',
+    'юмор', 'юность',
+    'яркость', 'январь', 'язык', 'ясность'
+  ];
+
+  const isSpectator = (qs.get('mode') || '').toLowerCase() === 'spectator';
 
   function applyStatusBarStyle(){
     if (!statusBarMeta) return;
@@ -345,13 +398,109 @@
 
   function toggleAutobar(){
     if (!autobar) return;
-    if (autofillActive) {
+    if (autofillActive && !isSpectator) {
       autobar.classList.remove('hidden');
       autobar.classList.add('active');
     } else {
       autobar.classList.add('hidden');
       autobar.classList.remove('active');
     }
+  }
+
+  function determineCaseMode(sample){
+    if (!sample) return 'lower';
+    const trimmed = sample.trim();
+    if (!trimmed) return 'lower';
+    if (trimmed === trimmed.toUpperCase()) return 'upper';
+    const rest = trimmed.slice(1);
+    if (trimmed[0] === trimmed[0].toUpperCase() && rest === rest.toLowerCase()) return 'capitalized';
+    return 'lower';
+  }
+
+  function applyCase(word, mode){
+    if (!word) return '';
+    switch(mode){
+      case 'upper':
+        return word.toUpperCase();
+      case 'capitalized':
+        return word.charAt(0).toUpperCase() + word.slice(1);
+      default:
+        return word.toLowerCase();
+    }
+  }
+
+  function assignSuggestion(el, value, display){
+    if (!el) return;
+    if (!value){
+      el.textContent = '';
+      el.dataset.value = '';
+      el.setAttribute('data-empty', 'true');
+      return;
+    }
+    el.textContent = display ?? value;
+    el.dataset.value = value;
+    el.setAttribute('data-empty', 'false');
+  }
+
+  function clearAutobarSuggestions(){
+    assignSuggestion(leftWordEl, '');
+    if (centerWordEl){
+      centerWordEl.textContent = 'слово';
+      centerWordEl.dataset.value = '';
+      centerWordEl.setAttribute('data-empty', 'true');
+    }
+    assignSuggestion(rightWordEl, '');
+  }
+
+  clearAutobarSuggestions();
+
+  function updateAutobarSuggestions(currentWord){
+    if (!autobar || !centerWordEl || isSpectator){
+      return;
+    }
+    if (!autofillActive || !targetWord){
+      clearAutobarSuggestions();
+      return;
+    }
+
+    const caretWord = currentWord || '';
+    const forcedPrefix = targetWord.slice(0, Math.min(prefixLen, targetWord.length));
+    const forcedLowerPrefix = forcedPrefix.toLowerCase();
+    const targetLower = targetWord.toLowerCase();
+    const caretLower = caretWord.toLowerCase();
+    const caseModeSource = caretWord || targetWord;
+    const caseMode = determineCaseMode(caseModeSource);
+    const searchBase = forcedLowerPrefix || caretLower;
+    const hasSearch = searchBase.length > 0;
+
+    assignSuggestion(centerWordEl, targetWord, targetWord);
+
+    let fallbackLower = '';
+
+    if (caretWord){
+      assignSuggestion(leftWordEl, caretWord, caretWord);
+    } else {
+      if (hasSearch){
+        const fallback = AUTOFILL_DICTIONARY.find(word => word.startsWith(searchBase)) || '';
+        fallbackLower = fallback;
+        const formattedFallback = fallback ? applyCase(fallback, caseMode) : '';
+        assignSuggestion(leftWordEl, formattedFallback, formattedFallback);
+      } else {
+        assignSuggestion(leftWordEl, '', '');
+      }
+    }
+
+    const alternatives = hasSearch ? AUTOFILL_DICTIONARY.filter(word => {
+      if (!word.startsWith(searchBase)) return false;
+      if (word === targetLower) return false;
+      if (word === caretLower) return false;
+      if (!caretWord && fallbackLower && word === fallbackLower) return false;
+      return true;
+    }) : [];
+
+    const alt = alternatives[0] || '';
+    const formattedAlt = alt ? applyCase(alt, caseMode) : '';
+    assignSuggestion(rightWordEl, formattedAlt, formattedAlt);
   }
 
   function updateCurrentRoomDisplay(code){
@@ -461,7 +610,7 @@
     autofillActive = false;
     targetWord = '';
     prefixLen = 3;
-    if (centerWordEl) centerWordEl.textContent = 'слово';
+    clearAutobarSuggestions();
     toggleAutobar();
   }
 
@@ -504,6 +653,9 @@
           applyingRemote = true;
           setNoteText(remote);
           applyingRemote = false;
+          if (autofillActive && !isSpectator) {
+            updateAutobarSuggestions(getCurrentWord());
+          }
         }
       };
 
@@ -514,9 +666,12 @@
         autofillActive = !!v.active;
         targetWord = v.targetWord || '';
         prefixLen = typeof v.prefixLen === 'number' ? v.prefixLen : 3;
-
-        if (centerWordEl) centerWordEl.textContent = targetWord || 'слово';
         toggleAutobar();
+        if (!autofillActive){
+          clearAutobarSuggestions();
+        } else {
+          updateAutobarSuggestions(getCurrentWord());
+        }
       };
 
       roomRef.child('autofill').on('value', autofillHandler);
@@ -558,18 +713,38 @@
     return {start:s, end:e};
   }
 
-  centerWordEl?.addEventListener('click', ()=>{
-    if (!autofillActive || !targetWord) return;
+  function getCurrentWord(){
+    const text = getNoteText();
+    const caret = getSelectionOffsets().start;
+    const {start, end} = currentWordBounds(text, caret);
+    return text.slice(start, end);
+  }
+
+  function applySuggestionWord(word){
+    if (!word) return;
     focusNote();
     const t = getNoteText();
     const caret = getSelectionOffsets().start;
     const {start, end} = currentWordBounds(t, caret);
-    const newText = t.slice(0,start) + targetWord + ' ' + t.slice(end);
+    const newText = t.slice(0, start) + word + ' ' + t.slice(end);
     setNoteText(newText);
-    const newCaret = start + targetWord.length + 1;
+    const newCaret = start + word.length + 1;
     setCaretPosition(newCaret);
     queueSave();
-  });
+    updateAutobarSuggestions(getCurrentWord());
+  }
+
+  function bindSuggestionClick(el){
+    el?.addEventListener('click', ()=>{
+      const value = el.dataset.value || '';
+      if (!value) return;
+      applySuggestionWord(value);
+    });
+  }
+
+  bindSuggestionClick(leftWordEl);
+  bindSuggestionClick(centerWordEl);
+  bindSuggestionClick(rightWordEl);
 
   function applyAutofillOnInput(){
     if (!autofillActive || !targetWord || prefixLen <= 0) return false;
@@ -637,7 +812,18 @@
     ensureBlocks();
     updateActionState();
     applyAutofillOnInput();
+    updateAutobarSuggestions(getCurrentWord());
     queueSave();
+  });
+
+  document.addEventListener('selectionchange', ()=>{
+    if (!autofillActive || isSpectator) return;
+    if (!noteEl) return;
+    const sel = window.getSelection();
+    if (!sel) return;
+    const anchor = sel.anchorNode instanceof Element ? sel.anchorNode : sel.anchorNode?.parentElement;
+    if (!anchor || !noteEl.contains(anchor)) return;
+    updateAutobarSuggestions(getCurrentWord());
   });
 
   attachButton(doneBtn, () => {

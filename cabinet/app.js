@@ -35,6 +35,7 @@
 
   function setUiForRoom(id){
     const link = new URL('../notes/', location.href);
+    link.searchParams.set('mode', 'spectator');
     link.searchParams.set('room', id);
     roomCodeEl.textContent = id;
     spectatorLinkEl.textContent = link.toString();

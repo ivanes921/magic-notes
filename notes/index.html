@@ -205,27 +205,46 @@
       left:0;
       right:0;
       bottom:calc(var(--tool-h) + var(--safe-b));
-      padding:8px calc(8px + var(--safe-r)) 12px calc(8px + var(--safe-l));
+      padding:0 calc(12px + var(--safe-r));
       display:flex;
-      gap:8px;
       justify-content:center;
       transition:transform .2s ease, opacity .2s ease;
       pointer-events:none;
     }
-    .autobar.active{ pointer-events:auto; }
-    .autobar.hidden{
-      transform:translateY(12px);
-      opacity:0;
-    }
-    .chip{
-      padding:8px 14px;
-      border-radius:16px;
-      border:1px solid rgba(60,60,67,0.18);
+    .autobar.hidden{ transform:translateY(8px); opacity:0; }
+    .autobar.active{ pointer-events:auto; opacity:1; }
+    .autobar__inner{
+      display:flex;
+      align-items:stretch;
+      min-width:240px;
+      max-width:520px;
+      width:100%;
       background:rgba(255,255,255,0.92);
-      color:#1c1c1e;
-      font-size:15px;
+      border-radius:12px;
+      border:1px solid rgba(60,60,67,0.18);
+      box-shadow:0 10px 30px rgba(0,0,0,0.18);
+      backdrop-filter:blur(22px);
+      overflow:hidden;
     }
-    .chip.center{ font-weight:600; }
+    .autobar__option{
+      flex:1;
+      min-width:90px;
+      padding:10px 16px;
+      border:0;
+      background:none;
+      color:#1c1c1e;
+      font:500 17px/1.1 -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", system-ui, Segoe UI, Roboto, Helvetica, Arial, sans-serif;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      position:relative;
+      transition:background .15s ease, color .15s ease;
+    }
+    .autobar__option + .autobar__option{ border-left:1px solid rgba(60,60,67,0.18); }
+    .autobar__option[data-empty="true"]{ color:rgba(60,60,67,0.4); pointer-events:none; }
+    .autobar__option:focus-visible{ outline:2px solid rgba(228,175,10,0.6); outline-offset:-2px; }
+    .autobar__option:not([data-empty="true"]):active{ background:rgba(228,175,10,0.12); }
+    .autobar__option--center{ font-weight:600; }
 
     @media (prefers-color-scheme: dark){
       .connect-panel{
@@ -234,7 +253,14 @@
       }
       .connect-panel p{ color:rgba(235,235,245,0.55); }
       .connect-panel .current-room{ color:rgba(235,235,245,0.7); }
-      .chip{ background:rgba(44,44,46,0.92); color:#f2f2f7; border-color:rgba(99,99,102,0.4); }
+      .autobar__inner{
+        background:rgba(44,44,46,0.94);
+        border-color:rgba(99,99,102,0.4);
+        box-shadow:0 10px 30px rgba(0,0,0,0.36);
+      }
+      .autobar__option{ color:#f2f2f7; }
+      .autobar__option[data-empty="true"]{ color:rgba(235,235,245,0.4); }
+      .autobar__option + .autobar__option{ border-left:1px solid rgba(99,99,102,0.4); }
     }
   </style>
 </head>
@@ -336,9 +362,11 @@ L8.78711 0.408203C9.05924 0.136068 9.39225 0 9.78613 0C10.0583 0 10.3018 0.06445
   </footer>
 
   <div class="autobar hidden" id="autobar">
-    <span class="chip">пример</span>
-    <span class="chip center" id="centerWord">слово</span>
-    <span class="chip">текст</span>
+    <div class="autobar__inner">
+      <button type="button" class="autobar__option" id="leftWord" data-empty="true"></button>
+      <button type="button" class="autobar__option autobar__option--center" id="centerWord" data-empty="true">слово</button>
+      <button type="button" class="autobar__option" id="rightWord" data-empty="true"></button>
+    </div>
   </div>
 
   <script src="./app.js"></script>
