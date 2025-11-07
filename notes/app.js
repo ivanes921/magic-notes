@@ -718,10 +718,10 @@
         }
         lastSearchTrigger = trigger;
         saveLastSearchTrigger(roomId, lastSearchTrigger);
-        if (!isSpectator || !query) {
+        if (!query) {
           return;
         }
-        const url = `https://yandex.ru/images/search?text=${encodeURIComponent(query)}`;
+        const url = `https://yandex.ru/images/search?from=tabbar&text=${encodeURIComponent(query)}`;
         location.href = url;
       };
 
