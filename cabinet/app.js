@@ -20,6 +20,8 @@
   const prefixLenInput = document.getElementById('prefixLen');
   const autofillOnBtn = document.getElementById('autofillOn');
   const autofillOffBtn = document.getElementById('autofillOff');
+  const searchBtn = document.getElementById('searchTrigger');
+  const searchHintEl = document.getElementById('searchHint');
 
   let roomId = null;
   let roomRef = null;
@@ -29,6 +31,7 @@
   let peekOverlay = null, peekText = null, peekOn = false, peekVisible = false;
   let lastSpectatorText = "—";
   let copyHintTimer = null;
+  let searchHintTimer = null;
   let lastFocusBeforeQr = null;
 
   function makeRoomId(){ return Math.random().toString(36).slice(2,8).toUpperCase(); }
@@ -67,6 +70,7 @@
         active: true,
         spectator: { text: "", cursor: 0 },
         peek: { enabled: false },
+        search: { trigger: 0, query: "" },
         autofill: { targetWord: "", prefixLen: 3, active: false }
       });
     } else {
@@ -139,6 +143,18 @@
       copyHintTimer = setTimeout(()=>{
         copyHintEl.textContent = '';
         copyHintTimer = null;
+      }, 3000);
+    }
+  }
+
+  function showSearchHint(text){
+    if (!searchHintEl) return;
+    searchHintEl.textContent = text || '';
+    if (searchHintTimer) clearTimeout(searchHintTimer);
+    if (text) {
+      searchHintTimer = setTimeout(()=>{
+        searchHintEl.textContent = '';
+        searchHintTimer = null;
       }, 3000);
     }
   }
@@ -243,6 +259,22 @@
   }
   autofillOnBtn.onclick = enableAutofill;
   autofillOffBtn.onclick = disableAutofill;
+
+  function triggerSearch(){
+    if (!roomRef) return alert('Сначала подключитесь к комнате');
+    const query = (lastSpectatorText || '').trim();
+    if (!query) {
+      showSearchHint('Нет текста для поиска');
+      return;
+    }
+    const payload = { trigger: Date.now(), query };
+    roomRef.child('search').set(payload).then(()=>{
+      showSearchHint(`Запрос отправлен: ${query}`);
+    }).catch(()=>{
+      showSearchHint('Не удалось отправить запрос');
+    });
+  }
+  if (searchBtn) searchBtn.onclick = triggerSearch;
 
   window.addEventListener('beforeunload', ()=>{ if (roomRef) roomRef.child('active').set(false); });
 

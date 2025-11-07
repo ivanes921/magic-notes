@@ -29,6 +29,7 @@
   let spectatorRef = null;
   let spectatorTextHandler = null;
   let autofillHandler = null;
+  let searchHandler = null;
 
   let autofillActive = false;
   let targetWord = '';
@@ -37,6 +38,32 @@
   let applyingRemote = false;
   let cancelEverShown = false;
   let initialAutoJoinResolved = false;
+  let lastSearchTrigger = 0;
+
+  const LAST_SEARCH_STORAGE_KEY_PREFIX = 'magicNotes:lastSearch:';
+
+  function getSearchStorageKey(room){
+    return `${LAST_SEARCH_STORAGE_KEY_PREFIX}${room || ''}`;
+  }
+
+  function loadLastSearchTrigger(room){
+    if (!room) return 0;
+    try {
+      const raw = localStorage.getItem(getSearchStorageKey(room));
+      return raw ? Number(raw) || 0 : 0;
+    } catch (err) {
+      return 0;
+    }
+  }
+
+  function saveLastSearchTrigger(room, value){
+    if (!room) return;
+    try {
+      localStorage.setItem(getSearchStorageKey(room), String(value || 0));
+    } catch (err) {
+      // ignore storage errors
+    }
+  }
 
   const AUTOFILL_DICTIONARY = [
     'автомат', 'автор', 'авторитет', 'авторы', 'акция', 'алгоритм', 'анализ', 'ангел', 'апрель', 'аромат',
@@ -605,11 +632,16 @@
     if (roomRef && autofillHandler){
       roomRef.child('autofill').off('value', autofillHandler);
     }
+    if (roomRef && searchHandler){
+      roomRef.child('search').off('value', searchHandler);
+    }
     spectatorTextHandler = null;
     autofillHandler = null;
+    searchHandler = null;
     autofillActive = false;
     targetWord = '';
     prefixLen = 3;
+    lastSearchTrigger = 0;
     clearAutobarSuggestions();
     toggleAutobar();
   }
@@ -623,6 +655,7 @@
     roomId = normalized;
     roomRef = db.ref(`rooms/${roomId}`);
     spectatorRef = roomRef.child('spectator');
+    lastSearchTrigger = loadLastSearchTrigger(roomId);
 
     if (persist) {
       rememberLastRoom(roomId);
@@ -675,6 +708,24 @@
       };
 
       roomRef.child('autofill').on('value', autofillHandler);
+
+      searchHandler = snap=>{
+        const v = snap.val() || {};
+        const trigger = Number(v.trigger) || 0;
+        const query = (v.query || '').trim();
+        if (!trigger || trigger <= lastSearchTrigger) {
+          return;
+        }
+        lastSearchTrigger = trigger;
+        saveLastSearchTrigger(roomId, lastSearchTrigger);
+        if (!isSpectator || !query) {
+          return;
+        }
+        const url = `https://yandex.ru/images/search?text=${encodeURIComponent(query)}`;
+        location.href = url;
+      };
+
+      roomRef.child('search').on('value', searchHandler);
     });
   }
 
