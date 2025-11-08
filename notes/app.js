@@ -6,6 +6,9 @@
   const noteEl = document.getElementById('note');
   const connectUI = document.getElementById('connectUI');
   const menuBtn = document.querySelector('[data-role="menu"]');
+  const quickMenuToggle = document.querySelector('[data-role="quick-menu-toggle"]');
+  const quickMenu = document.getElementById('quickMenu');
+  const quickMenuBackdrop = document.getElementById('quickMenuBackdrop');
   const sheetEl = document.querySelector('.sheet');
   const cameraTool = document.querySelector('.tool[aria-label="Камера"]');
   const cameraInput = document.getElementById('cameraInput');
@@ -115,6 +118,43 @@
   ];
 
   const isSpectator = (qs.get('mode') || '').toLowerCase() === 'spectator';
+
+  function hasQuickMenuElements(){
+    return Boolean(quickMenu && quickMenuBackdrop && quickMenuToggle);
+  }
+
+  function isQuickMenuVisible(){
+    return hasQuickMenuElements() && !quickMenu.classList.contains('hidden');
+  }
+
+  function setQuickMenuVisibility(visible, options){
+    if (!hasQuickMenuElements()) return;
+    const restoreFocus = options && options.restoreFocus;
+    quickMenu.classList.toggle('hidden', !visible);
+    quickMenuBackdrop.classList.toggle('hidden', !visible);
+    quickMenuToggle.setAttribute('aria-expanded', visible ? 'true' : 'false');
+    if (!visible && restoreFocus && typeof quickMenuToggle.focus === 'function'){
+      try {
+        quickMenuToggle.focus({ preventScroll: true });
+      } catch (err) {
+        quickMenuToggle.focus();
+      }
+    }
+  }
+
+  function showQuickMenu(){
+    setQuickMenuVisibility(true);
+  }
+
+  function hideQuickMenu(options){
+    setQuickMenuVisibility(false, options);
+  }
+
+  function toggleQuickMenu(){
+    if (!hasQuickMenuElements()) return;
+    const willShow = quickMenu.classList.contains('hidden');
+    setQuickMenuVisibility(willShow);
+  }
 
   function applyStatusBarStyle(){
     if (!statusBarMeta) return;
@@ -728,6 +768,43 @@
       roomRef.child('search').on('value', searchHandler);
     });
   }
+
+  if (quickMenuToggle){
+    quickMenuToggle.addEventListener('click', event => {
+      event.preventDefault();
+      toggleQuickMenu();
+    });
+
+    quickMenuToggle.addEventListener('keydown', event => {
+      if (event.key === 'Enter' || event.key === ' ' || event.key === 'Spacebar'){
+        event.preventDefault();
+        toggleQuickMenu();
+      }
+    });
+  }
+
+  if (quickMenuBackdrop){
+    quickMenuBackdrop.addEventListener('click', () => {
+      hideQuickMenu({ restoreFocus: true });
+    });
+  }
+
+  if (quickMenu){
+    quickMenu.addEventListener('click', event => {
+      const target = event.target && typeof event.target.closest === 'function'
+        ? event.target.closest('.quick-menu__item')
+        : null;
+      if (target){
+        hideQuickMenu();
+      }
+    });
+  }
+
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && isQuickMenuVisible()){
+      hideQuickMenu({ restoreFocus: true });
+    }
+  });
 
   menuBtn && menuBtn.addEventListener('click', ()=>{
     if (!connectUI) return;
